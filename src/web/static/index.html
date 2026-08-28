@@ -58,7 +58,7 @@
                 <div class="stat-icon stat-icon-cyan"><i data-lucide="message-square"></i></div>
             </div>
             <div class="stat-value" id="stat-messages">—</div>
-            <div class="stat-sub">Лише власна мова (from_user)</div>
+            <div class="stat-sub">Лише ваші вихідні повідомлення (from_user)</div>
         </div>
         <div class="stat-card">
             <div class="stat-card-header">
@@ -82,7 +82,7 @@
     <div class="action-bar">
         <div>
             <h3 style="font-weight: 700; color: #fff;">Управління пайплайном</h3>
-            <p style="font-size: 0.85rem; color: var(--text-dim);">Синхронізуйте нові повідомлення або побудуйте повну аналітику в один клік</p>
+            <p style="font-size: 0.85rem; color: var(--text-dim);">Синхронізація виключно ваших вихідних повідомлень (без повідомлень співрозмовника) для персонального аналізу лише вашого стилю.</p>
         </div>
         <div class="action-buttons">
             <button class="btn btn-secondary" id="btn-fetch" onclick="triggerFetch()">
@@ -93,6 +93,28 @@
                 <i data-lucide="play"></i>
                 <span>Запустити повний аналіз</span>
             </button>
+        </div>
+    </div>
+
+    <!-- Live Progress Bar Card (shown during tasks) -->
+    <div class="progress-card" id="task-progress-card" style="display: none;">
+        <div class="progress-header">
+            <div class="progress-title-wrap">
+                <span class="progress-spinner"><i data-lucide="loader-2"></i></span>
+                <span class="progress-title" id="progress-task-name">Синхронізація повідомлень...</span>
+            </div>
+            <div class="progress-meta">
+                <span class="progress-badge" id="progress-chat-badge">[0/0] Чат</span>
+                <span class="progress-badge progress-badge-accent" id="progress-speed-badge">0 пов/сек</span>
+                <span class="progress-badge progress-badge-eta" id="progress-eta-badge">Залишилось: ~0 с</span>
+            </div>
+        </div>
+        <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div class="progress-footer">
+            <span id="progress-count-text">0 / 0 повідомлень</span>
+            <span id="progress-pct-text" style="font-weight: 700; color: #fff;">0.0%</span>
         </div>
     </div>
 

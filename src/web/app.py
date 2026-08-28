@@ -42,6 +42,7 @@ state: Dict[str, Any] = {
     "qr_login_obj": None,
     "task_running": False,
     "task_type": None,
+    "task_progress": None,
     "logs": [],
 }
 
@@ -121,6 +122,7 @@ async def api_status():
         "infographics_count": png_count,
         "task_running": state["task_running"],
         "task_type": state["task_type"],
+        "progress": state["task_progress"],
     }
 
 
@@ -319,17 +321,26 @@ async def action_fetch(background_tasks: BackgroundTasks):
 
     state["task_running"] = True
     state["task_type"] = "fetch"
+    state["task_progress"] = None
     log_event("=== Запуск синхронізації повідомлень із Telegram ===")
+
+    def update_progress(p_data: Dict[str, Any]):
+        state["task_progress"] = p_data
 
     async def run_fetch():
         try:
             client = get_telegram_client()
-            await fetch_messages_incremental(client, log_callback=log_event)
+            await fetch_messages_incremental(
+                client,
+                log_callback=log_event,
+                progress_callback=update_progress
+            )
         except Exception as e:
             log_event(f"[❌] Помилка під час синхронізації: {e}")
         finally:
             state["task_running"] = False
             state["task_type"] = None
+            state["task_progress"] = None
             log_event("=== Синхронізацію повідомлень завершено ===")
 
     background_tasks.add_task(run_fetch)

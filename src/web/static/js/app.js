@@ -113,6 +113,46 @@ async function updateStatus() {
             document.getElementById('stat-period').textContent = '—';
         }
 
+        // Live Progress Card
+        const progressCard = document.getElementById('task-progress-card');
+        if (progressCard) {
+            if (data.task_running && data.progress) {
+                progressCard.style.display = 'flex';
+                const p = data.progress;
+
+                document.getElementById('progress-task-name').textContent =
+                    data.task_type === 'fetch' ? 'Синхронізація повідомлень Telegram' : 'Аналітичний пайплайн...';
+
+                document.getElementById('progress-chat-badge').textContent =
+                    `[${p.chat_idx}/${p.total_chats}] ${p.current_chat || 'Чат'}`;
+
+                document.getElementById('progress-speed-badge').textContent =
+                    p.speed > 0 ? `${p.speed.toLocaleString('uk-UA')} пов/сек` : `— пов/сек`;
+
+                document.getElementById('progress-eta-badge').textContent =
+                    `Залишилось: ~${p.eta || 'розрахунок...'}`;
+
+                document.getElementById('progress-bar-fill').style.width = `${Math.min(100, Math.max(0, p.pct))}%`;
+
+                document.getElementById('progress-count-text').textContent =
+                    `${(p.current || 0).toLocaleString('uk-UA')} / ${(p.total || 0).toLocaleString('uk-UA')} повідомлень`;
+
+                document.getElementById('progress-pct-text').textContent = `${(p.pct || 0).toFixed(1)}%`;
+            } else if (data.task_running) {
+                progressCard.style.display = 'flex';
+                document.getElementById('progress-task-name').textContent =
+                    data.task_type === 'fetch' ? 'Підготовка до синхронізації...' : 'Обробка аналітики та побудова графіків...';
+                document.getElementById('progress-chat-badge').textContent = 'Виконується...';
+                document.getElementById('progress-speed-badge').textContent = '—';
+                document.getElementById('progress-eta-badge').textContent = 'Зачекайте...';
+                document.getElementById('progress-bar-fill').style.width = '100%';
+                document.getElementById('progress-count-text').textContent = 'Обробка даних...';
+                document.getElementById('progress-pct-text').textContent = '...';
+            } else {
+                progressCard.style.display = 'none';
+            }
+        }
+
         // Button states
         const btnFetch = document.getElementById('btn-fetch');
         const btnAnalyze = document.getElementById('btn-analyze');
@@ -145,7 +185,7 @@ async function updateStatus() {
     }
 }
 
-// Log streaming via SSE
+// Log streaming via SSE with Smart Auto-Scroll
 function initLogStream() {
     const logsContainer = document.getElementById('logs-terminal');
     const evtSource = new EventSource('/api/logs/stream');
@@ -154,15 +194,22 @@ function initLogStream() {
         try {
             const data = JSON.parse(event.data);
             if (data.log) {
+                // Check if user is currently near bottom before inserting new log
+                const isNearBottom = (logsContainer.scrollHeight - logsContainer.scrollTop - logsContainer.clientHeight) <= 80;
+
                 const entry = document.createElement('div');
                 entry.className = 'log-entry';
                 if (data.log.includes('[✔]')) entry.classList.add('success');
                 else if (data.log.includes('[❌]') || data.log.includes('Помилка')) entry.classList.add('error');
-                else if (data.log.includes('===') || data.log.includes('[•]')) entry.classList.add('highlight');
+                else if (data.log.includes('===') || data.log.includes('[•]') || data.log.includes('ℹ️')) entry.classList.add('highlight');
 
                 entry.textContent = data.log;
                 logsContainer.appendChild(entry);
-                logsContainer.scrollTop = logsContainer.scrollHeight;
+
+                // Auto-scroll ONLY if user is already at the bottom
+                if (isNearBottom) {
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                }
             }
         } catch (e) {
             console.error('Log parse error:', e);
