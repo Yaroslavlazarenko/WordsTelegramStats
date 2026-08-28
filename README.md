@@ -266,6 +266,7 @@ WordsTelegramStats/
 │   └── generate_sample_assets.py# Генерація демо-графіків для README
 │
 ├── chats_data/                  # Локальні SQLite бази за кожним чатом (.db)
+├── session/                     # Сесійний файл авторизації Telegram (.session)
 ├── infographics/                # Згенеровані графіки високої якості (.png)
 ├── words_lists/                 # Частотні словники за чатами та роками (.txt)
 ├── docs/images/                 # Анонімізовані зразки інфографік для README
@@ -279,7 +280,7 @@ WordsTelegramStats/
 ## 🔒 Конфіденційність та Безпека
 
 * Авторизація відбувається напряму з серверами Telegram через офіційний протокол MTProto.
-* Сесійний файл `telegram_words_stats.session` та бази `chats_data/` занесені до `.gitignore` і залишаються лише на вашій машині.
+* Сесійні файли у папці `session/` та бази `chats_data/` занесені до `.gitignore` і залишаються лише на вашій машині.
 * Веб-інтерфейс за замовчуванням слухає лише локальний сокет `localhost:8000`.
 
 ---

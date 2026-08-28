@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create volume directories
-RUN mkdir -p chats_data infographics words_lists .cache
+RUN mkdir -p chats_data infographics words_lists .cache session
 
 EXPOSE 8000
 

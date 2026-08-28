@@ -5,6 +5,8 @@
 # 1. Telegram Sessions & Credentials (CRITICAL for privacy & security)
 *.session
 *.session-journal
+session/
+.session/
 telegram_words_stats.session
 telegram_words_stats.session-journal
 

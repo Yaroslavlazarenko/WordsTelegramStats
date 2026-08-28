@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   words-telegram-stats:
     build: .
@@ -12,8 +10,8 @@ services:
       - ./infographics:/app/infographics
       - ./words_lists:/app/words_lists
       - ./.cache:/app/.cache
-      # Persist Telegram login session
-      - ./telegram_words_stats.session:/app/telegram_words_stats.session
+      # Persist Telegram login session directory
+      - ./session:/app/session
     environment:
       - PORT=8000
       - PYTHONUNBUFFERED=1
