@@ -26,7 +26,7 @@ from src.core.config import (
     REPORT_FILE,
 )
 from src.data.db import get_dataset_summary
-from src.telegram.client import get_telegram_client
+from src.telegram.client import get_telegram_client, reset_telegram_client
 from src.telegram.auth import get_auth_state, generate_qr_base64
 from src.telegram.fetcher import fetch_messages_incremental
 from src.pipeline.runner import run_full_pipeline
@@ -200,6 +200,18 @@ async def submit_2fa(request: Request):
         return {"status": "authorized", "user": state["user_info"]}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/auth/logout")
+async def logout():
+    """Logs out from Telegram, disconnects client and clears session file."""
+    await reset_telegram_client()
+    state["auth_status"] = "unauthorized"
+    state["user_info"] = None
+    state["qr_img_base64"] = None
+    state["qr_login_obj"] = None
+    log_event("Вихід з облікового запису Telegram успішно виконано.")
+    return {"status": "unauthorized"}
 
 
 @app.get("/api/infographics")

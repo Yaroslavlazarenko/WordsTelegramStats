@@ -2,6 +2,7 @@
 """
 Telegram message fetcher.
 Downloads user's sent messages from 1-on-1 dialogs incrementally and saves them into SQLite databases.
+Provides real-time detailed progress logging.
 """
 
 import os
@@ -18,6 +19,7 @@ async def fetch_messages_incremental(
 ) -> Dict[str, Any]:
     """
     Incrementally fetches sent messages for all active 1-on-1 personal dialogs.
+    Provides real-time progress indicators per chat and overall.
     """
     def log(msg: str) -> None:
         if log_callback:
@@ -45,8 +47,9 @@ async def fetch_messages_incremental(
         if dialog.is_user and not is_bot and not is_self:
             personal_dialogs.append(dialog)
 
-    log(f"Знайдено {len(personal_dialogs)} особистих чатів із реальними користувачами.")
-    log(f"Початок збору ваших надісланих повідомлень у '{DATA_DIR}'...")
+    total_dialogs = len(personal_dialogs)
+    log(f"Знайдено {total_dialogs} особистих чатів із реальними користувачами.")
+    log(f"Початок збору ваших надісланих повідомлень у '{DATA_DIR}'...\n")
 
     total_new_saved = 0
     total_scanned_chats = 0
@@ -61,6 +64,25 @@ async def fetch_messages_incremental(
 
         init_chat_db(db_path)
         last_msg_id = get_last_msg_id(db_path)
+
+        # Estimate expected new messages if possible
+        expected_total = None
+        try:
+            res = await client.get_messages(dialog, from_user="me", min_id=last_msg_id, limit=0)
+            if res is not None:
+                expected_total = res.total
+        except Exception:
+            expected_total = None
+
+        if expected_total == 0:
+            log(f"[{idx}/{total_dialogs}] {chat_title[:24]} | [✔] Актуально (нових немає)")
+            total_scanned_chats += 1
+            continue
+
+        if expected_total:
+            log(f"[{idx}/{total_dialogs}] Чат «{chat_title}» (до завантаження: ~{expected_total} пов.)...")
+        else:
+            log(f"[{idx}/{total_dialogs}] Чат «{chat_title}» (початок збору)...")
 
         chat_messages_batch: List[tuple] = []
         chat_count = 0
@@ -99,23 +121,27 @@ async def fetch_messages_incremental(
                 if len(chat_messages_batch) >= 100:
                     save_messages_batch(db_path, chat_messages_batch)
                     chat_messages_batch = []
+                    if expected_total:
+                        log(f"   ⏳ {chat_title[:22]} ({chat_count}/{expected_total})")
+                    elif chat_count % 200 == 0:
+                        log(f"   ⏳ {chat_title[:22]} ({chat_count} завантажено)...")
 
             if chat_messages_batch:
                 save_messages_batch(db_path, chat_messages_batch)
 
             if chat_count > 0:
-                log(f"  [{idx}/{len(personal_dialogs)}] {chat_title[:22]:<22} | [✔] +{chat_count} нових повідомлень")
                 total_new_saved += chat_count
+                log(f"[{idx}/{total_dialogs}] {chat_title[:24]} | [✔] +{chat_count} нових повідомлень (Всього зібрано: {total_new_saved})\n")
             else:
-                log(f"  [{idx}/{len(personal_dialogs)}] {chat_title[:22]:<22} | [✔] Актуально (нових немає)")
+                log(f"[{idx}/{total_dialogs}] {chat_title[:24]} | [✔] Актуально (нових немає)\n")
 
             total_scanned_chats += 1
 
         except Exception as e:
-            log(f"  [{idx}/{len(personal_dialogs)}] {chat_title[:22]:<22} | [❌] Помилка: {str(e)[:40]}")
+            log(f"[{idx}/{total_dialogs}] {chat_title[:24]} | [❌] Помилка: {str(e)[:40]}\n")
 
     summary = get_dataset_summary()
-    log("\n" + "=" * 60)
+    log("=" * 60)
     log(" ПІДСУМОК СИНХРОНІЗАЦІЇ")
     log("=" * 60)
     log(f"Перевірено чатів:        {total_scanned_chats}")

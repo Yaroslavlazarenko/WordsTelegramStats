@@ -284,6 +284,12 @@ main {
     background: #334155;
 }
 
+.btn-logout:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+}
+
 .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;

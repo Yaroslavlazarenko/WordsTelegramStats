@@ -134,7 +134,7 @@
     </div>
 </main>
 
-<!-- Modal for image viewing -->
+<!-- Modal for image viewing & Auth -->
 <div class="modal" id="chart-modal" onclick="if(event.target === this) closeModal()">
     <div class="modal-content">
         <div class="modal-header">
@@ -143,8 +143,30 @@
                 <i data-lucide="x"></i>
             </button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" id="modal-body">
             <img class="modal-img" id="modal-img" src="" alt="Chart HD">
+
+            <!-- Dynamic 2FA Input View -->
+            <div id="modal-2fa-container" style="display: none; width: 100%; max-width: 440px; text-align: center; padding: 1.5rem 0;">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 16px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; margin-bottom: 1.25rem;">
+                    <i data-lucide="shield-check" style="width: 36px; height: 36px;"></i>
+                </div>
+                <h3 style="color: #fff; font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Двоетапна перевірка (2FA)</h3>
+                <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4;">
+                    Ваш обліковий запис захищений паролем. Введіть його для завершення авторизації.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    <input type="password" id="modal-2fa-input" placeholder="Введіть 2FA пароль"
+                           style="padding: 0.85rem 1.1rem; border-radius: 10px; border: 1px solid var(--card-border); background: #0f1422; color: #fff; font-size: 0.95rem; width: 100%; outline: none; transition: border-color 0.2s;"
+                           onkeydown="if(event.key === 'Enter') submitModal2FA()">
+                    <div id="modal-2fa-error" style="color: var(--danger); font-size: 0.85rem; text-align: left; display: none;"></div>
+                    <button class="btn btn-primary" style="justify-content: center; padding: 0.85rem; font-size: 0.95rem; width: 100%;" onclick="submitModal2FA()" id="btn-modal-2fa">
+                        <i data-lucide="key"></i>
+                        <span>Підтвердити пароль</span>
+                    </button>
+                </div>
+            </div>
+
             <p id="modal-desc" style="color: var(--text-dim); font-size: 0.9rem; text-align: center;"></p>
         </div>
     </div>

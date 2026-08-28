@@ -3,7 +3,9 @@ let appState = {
     currentTab: 'gallery',
     isAuthorized: false,
     taskRunning: false,
-    taskType: null
+    taskType: null,
+    authModalOpen: false,
+    in2FAMode: false
 };
 
 // Category icon map for clean UI without emojis
@@ -53,9 +55,11 @@ function initNavigation() {
 }
 
 // Status Polling
+let pollingInterval = null;
+
 async function initStatusPolling() {
     await updateStatus();
-    setInterval(updateStatus, 3000);
+    pollingInterval = setInterval(updateStatus, 1500);
 }
 
 async function updateStatus() {
@@ -84,6 +88,18 @@ async function updateStatus() {
             text.textContent = 'Не авторизовано';
         }
 
+        // Auto-close modal on successful authorization
+        if (data.is_authorized && appState.authModalOpen) {
+            closeModal();
+            appState.authModalOpen = false;
+            appState.in2FAMode = false;
+        }
+
+        // Transition modal to 2FA input if required
+        if (!data.is_authorized && data.auth_status === 'need_2fa' && appState.authModalOpen && !appState.in2FAMode) {
+            showModal2FA();
+        }
+
         // Dashboard metric cards
         document.getElementById('stat-chats').textContent = data.total_chats || 0;
         document.getElementById('stat-messages').textContent = (data.total_messages || 0).toLocaleString('uk-UA');
@@ -103,31 +119,25 @@ async function updateStatus() {
         if (btnFetch) btnFetch.disabled = data.task_running || !data.is_authorized;
         if (btnAnalyze) btnAnalyze.disabled = data.task_running || data.total_messages === 0;
 
-        // Auth container logic
+        // Auth container logic in header
         const authContainer = document.getElementById('auth-actions-container');
         if (authContainer) {
-            if (!data.is_authorized && data.auth_status === 'need_2fa') {
-                authContainer.innerHTML = `
-                    <div style="display:flex; gap:0.5rem; align-items:center;">
-                        <input type="password" id="input-2fa" placeholder="Введіть 2FA пароль"
-                               style="padding:0.6rem 1rem; border-radius:8px; border:1px solid var(--card-border); background:#1e293b; color:#fff;">
-                        <button class="btn btn-primary" onclick="submit2FA()">
-                            <i data-lucide="check"></i>
-                            <span>Підтвердити</span>
-                        </button>
-                    </div>
-                `;
-                refreshIcons();
-            } else if (!data.is_authorized) {
+            if (!data.is_authorized) {
                 authContainer.innerHTML = `
                     <button class="btn btn-secondary" onclick="startQRLogin()">
                         <i data-lucide="key"></i>
-                        <span>Увійти через QR</span>
+                        <span>${data.auth_status === 'need_2fa' ? 'Ввести 2FA' : 'Увійти через QR'}</span>
                     </button>
                 `;
                 refreshIcons();
             } else {
-                authContainer.innerHTML = ``;
+                authContainer.innerHTML = `
+                    <button class="btn btn-secondary btn-logout" onclick="triggerLogout()" title="Вийти з облікового запису Telegram">
+                        <i data-lucide="log-out"></i>
+                        <span>Вийти</span>
+                    </button>
+                `;
+                refreshIcons();
             }
         }
     } catch (e) {
@@ -160,13 +170,24 @@ function initLogStream() {
     };
 }
 
-// Actions
+// QR Login Actions
 async function startQRLogin() {
     try {
         const res = await fetch('/api/auth/start-qr', { method: 'POST' });
         const data = await res.json();
         if (data.status === 'need_qr') {
-            openModal(data.qr_image, 'Скануйте QR-код у Telegram', 'Відкрийте Telegram > Налаштування > Пристрої > Підключити пристрій');
+            appState.authModalOpen = true;
+            appState.in2FAMode = false;
+
+            // Reset modal elements
+            document.getElementById('modal-img').style.display = 'block';
+            document.getElementById('modal-2fa-container').style.display = 'none';
+
+            openModal(
+                data.qr_image,
+                'Скануйте QR-код у Telegram',
+                'Відкрийте Telegram на телефоні: Налаштування → Пристрої → Підключити пристрій'
+            );
         } else if (data.status === 'already_authorized') {
             alert('Ви вже успішно авторизовані!');
         }
@@ -175,9 +196,48 @@ async function startQRLogin() {
     }
 }
 
-async function submit2FA() {
-    const pwd = document.getElementById('input-2fa')?.value;
-    if (!pwd) return;
+function showModal2FA() {
+    appState.in2FAMode = true;
+    appState.authModalOpen = true;
+
+    const modal = document.getElementById('chart-modal');
+    document.getElementById('modal-title').textContent = 'Двоетапна перевірка (2FA)';
+    document.getElementById('modal-img').style.display = 'none';
+    document.getElementById('modal-desc').textContent = '';
+
+    const twoFaBox = document.getElementById('modal-2fa-container');
+    twoFaBox.style.display = 'block';
+
+    const input = document.getElementById('modal-2fa-input');
+    input.value = '';
+    const errBox = document.getElementById('modal-2fa-error');
+    errBox.style.display = 'none';
+    errBox.textContent = '';
+
+    modal.classList.add('active');
+    refreshIcons();
+
+    setTimeout(() => input.focus(), 100);
+}
+
+async function submitModal2FA() {
+    const input = document.getElementById('modal-2fa-input');
+    const errBox = document.getElementById('modal-2fa-error');
+    const btn = document.getElementById('btn-modal-2fa');
+    const pwd = input.value.trim();
+
+    if (!pwd) {
+        errBox.textContent = 'Будь ласка, введіть пароль.';
+        errBox.style.display = 'block';
+        input.focus();
+        return;
+    }
+
+    errBox.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2"></i> <span>Перевірка...</span>`;
+    refreshIcons();
+
     try {
         const res = await fetch('/api/auth/2fa', {
             method: 'POST',
@@ -185,14 +245,37 @@ async function submit2FA() {
             body: JSON.stringify({ password: pwd })
         });
         const data = await res.json();
+
         if (data.status === 'authorized') {
-            alert('Успішний вхід із 2FA!');
-            updateStatus();
+            closeModal();
+            appState.authModalOpen = false;
+            appState.in2FAMode = false;
+            await updateStatus();
         } else {
-            alert('Помилка 2FA: ' + (data.message || 'Невірний пароль'));
+            errBox.textContent = data.message || 'Невірний 2FA пароль. Спробуйте ще раз.';
+            errBox.style.display = 'block';
+            input.focus();
+            input.select();
         }
     } catch (e) {
-        alert('Помилка відправки 2FA: ' + e);
+        errBox.textContent = 'Помилка з\'єднання із сервером: ' + e;
+        errBox.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="key"></i> <span>Підтвердити пароль</span>`;
+        refreshIcons();
+    }
+}
+
+async function triggerLogout() {
+    if (!confirm("Ви дійсно бажаєте вийти з облікового запису Telegram?")) return;
+    try {
+        const res = await fetch('/api/auth/logout', { method: 'POST' });
+        if (res.ok) {
+            await updateStatus();
+        }
+    } catch (e) {
+        alert('Помилка виходу: ' + e);
     }
 }
 
@@ -302,6 +385,8 @@ async function loadReport() {
 function openModal(imgSrc, title, desc) {
     const modal = document.getElementById('chart-modal');
     document.getElementById('modal-img').src = imgSrc;
+    document.getElementById('modal-img').style.display = 'block';
+    document.getElementById('modal-2fa-container').style.display = 'none';
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-desc').textContent = desc || '';
     modal.classList.add('active');
@@ -311,4 +396,6 @@ function openModal(imgSrc, title, desc) {
 function closeModal() {
     const modal = document.getElementById('chart-modal');
     modal.classList.remove('active');
+    appState.authModalOpen = false;
+    appState.in2FAMode = false;
 }
