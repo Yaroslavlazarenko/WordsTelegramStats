@@ -120,24 +120,34 @@ async function updateStatus() {
                 progressCard.style.display = 'flex';
                 const p = data.progress;
 
-                document.getElementById('progress-task-name').textContent =
-                    data.task_type === 'fetch' ? 'Синхронізація повідомлень Telegram' : 'Аналітичний пайплайн...';
+                if (p.phase === 'precheck') {
+                    document.getElementById('progress-task-name').textContent = 'Підготовка: аналіз обсягу чатів...';
+                    document.getElementById('progress-chat-badge').textContent = `[${p.chat_idx}/${p.total_chats}] ${p.current_chat || 'Сканування'}`;
+                    document.getElementById('progress-speed-badge').textContent = `Знайдено: ~${(p.current || 0).toLocaleString('uk-UA')} пов.`;
+                    document.getElementById('progress-eta-badge').textContent = `Оцінка черги`;
+                    document.getElementById('progress-bar-fill').style.width = `${Math.min(100, Math.max(0, p.pct))}%`;
+                    document.getElementById('progress-count-text').textContent = `Перевірено ${p.chat_idx} із ${p.total_chats} чатів`;
+                    document.getElementById('progress-pct-text').textContent = `${(p.pct || 0).toFixed(1)}%`;
+                } else {
+                    document.getElementById('progress-task-name').textContent =
+                        data.task_type === 'fetch' ? 'Синхронізація повідомлень Telegram' : 'Аналітичний пайплайн...';
 
-                document.getElementById('progress-chat-badge').textContent =
-                    `[${p.chat_idx}/${p.total_chats}] ${p.current_chat || 'Чат'}`;
+                    document.getElementById('progress-chat-badge').textContent =
+                        `[${p.chat_idx}/${p.total_chats}] ${p.current_chat || 'Чат'}`;
 
-                document.getElementById('progress-speed-badge').textContent =
-                    p.speed > 0 ? `${p.speed.toLocaleString('uk-UA')} пов/сек` : `— пов/сек`;
+                    document.getElementById('progress-speed-badge').textContent =
+                        p.speed > 0 ? `${p.speed.toLocaleString('uk-UA')} пов/сек` : `— пов/сек`;
 
-                document.getElementById('progress-eta-badge').textContent =
-                    `Залишилось: ~${p.eta || 'розрахунок...'}`;
+                    document.getElementById('progress-eta-badge').textContent =
+                        `Залишилось: ~${p.eta || 'розрахунок...'}`;
 
-                document.getElementById('progress-bar-fill').style.width = `${Math.min(100, Math.max(0, p.pct))}%`;
+                    document.getElementById('progress-bar-fill').style.width = `${Math.min(100, Math.max(0, p.pct))}%`;
 
-                document.getElementById('progress-count-text').textContent =
-                    `${(p.current || 0).toLocaleString('uk-UA')} / ${(p.total || 0).toLocaleString('uk-UA')} повідомлень`;
+                    document.getElementById('progress-count-text').textContent =
+                        `${(p.current || 0).toLocaleString('uk-UA')} / ${(p.total || 0).toLocaleString('uk-UA')} повідомлень`;
 
-                document.getElementById('progress-pct-text').textContent = `${(p.pct || 0).toFixed(1)}%`;
+                    document.getElementById('progress-pct-text').textContent = `${(p.pct || 0).toFixed(1)}%`;
+                }
             } else if (data.task_running) {
                 progressCard.style.display = 'flex';
                 document.getElementById('progress-task-name').textContent =

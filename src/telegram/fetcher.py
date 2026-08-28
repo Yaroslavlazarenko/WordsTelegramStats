@@ -75,7 +75,7 @@ async def fetch_messages_incremental(
     log(f"Знайдено {total_dialogs} особистих чатів із реальними користувачами.")
     log("Оцінка загального обсягу нових повідомлень по всіх діалогах...")
 
-    # Fast pre-scan of total messages in batches of 15
+    # Fast pre-scan of total messages in batches of 10 with live feedback
     dialog_meta: Dict[int, Dict[str, Any]] = {}
     total_expected_all = 0
 
@@ -93,13 +93,14 @@ async def fetch_messages_incremental(
                 cnt = res.total or 0
         except Exception:
             cnt = 0
-        return chat_id, cnt, last_id, db_path
+        return chat_id, cnt, last_id, db_path, chat_title
 
-    chunk_size = 15
+    chunk_size = 10
+    processed_prep = 0
     for i in range(0, total_dialogs, chunk_size):
         chunk = personal_dialogs[i:i + chunk_size]
         results = await asyncio.gather(*[pre_check_dialog(d) for d in chunk])
-        for chat_id, cnt, last_id, db_path in results:
+        for chat_id, cnt, last_id, db_path, title in results:
             dialog_meta[chat_id] = {
                 "expected": cnt,
                 "last_id": last_id,
@@ -107,7 +108,25 @@ async def fetch_messages_incremental(
             }
             total_expected_all += cnt
 
-    log(f"Загальний обсяг до синхронізації: ~{total_expected_all:,} повідомлень.")
+        processed_prep = min(i + chunk_size, total_dialogs)
+        pct_prep = round((processed_prep / total_dialogs) * 100, 1)
+        last_title = results[-1][4] if results else "Чат"
+
+        log(f"  🔍 Підготовка [{processed_prep:>3}/{total_dialogs}] ({pct_prep:>5.1f}%): перевірено «{last_title[:20]}» | знайдено: ~{total_expected_all:,} пов.")
+
+        report_progress({
+            "phase": "precheck",
+            "current": total_expected_all,
+            "total": None,
+            "pct": pct_prep,
+            "speed": 0.0,
+            "eta": "оцінка черги...",
+            "current_chat": f"Підготовка: {last_title[:18]}",
+            "chat_idx": processed_prep,
+            "total_chats": total_dialogs
+        })
+
+    log(f"\nЗагальний обсяг до синхронізації: ~{total_expected_all:,} повідомлень.")
     log("ℹ️ Збираються виключно ваші вихідні повідомлення (from_user='me'), без повідомлень співрозмовників — для точного персонального аналізу лише вашого мовлення.")
     log(f"Початок збору повідомлень у '{DATA_DIR}'...\n")
 
