@@ -291,8 +291,8 @@ def get_report():
     """Returns generated textual report content."""
     if REPORT_FILE.exists():
         with open(REPORT_FILE, "r", encoding="utf-8") as f:
-            return {"content": f.read()}
-    return {"content": "Звіт ще не згенеровано. Запустіть аналіз."}
+            return {"exists": True, "content": f.read()}
+    return {"exists": False, "content": None}
 
 
 @app.get("/api/logs/stream")
@@ -314,15 +314,17 @@ async def logs_stream():
 
 
 @app.post("/api/actions/fetch")
-async def action_fetch(background_tasks: BackgroundTasks):
+async def action_fetch(background_tasks: BackgroundTasks, lang: str = "uk"):
     """Triggers Telegram message synchronization."""
     if state["task_running"]:
-        return JSONResponse({"status": "error", "message": "Завдання вже виконується"}, status_code=400)
+        err_msg = "Task is already in progress" if lang == "en" else "Завдання вже виконується"
+        return JSONResponse({"status": "error", "message": err_msg}, status_code=400)
 
     state["task_running"] = True
     state["task_type"] = "fetch"
     state["task_progress"] = None
-    log_event("=== Запуск синхронізації повідомлень із Telegram ===")
+    start_msg = "=== Starting Telegram message synchronization ===" if lang == "en" else "=== Запуск синхронізації повідомлень із Telegram ==="
+    log_event(start_msg)
 
     def update_progress(p_data: Dict[str, Any]):
         state["task_progress"] = p_data
@@ -333,39 +335,46 @@ async def action_fetch(background_tasks: BackgroundTasks):
             await fetch_messages_incremental(
                 client,
                 log_callback=log_event,
-                progress_callback=update_progress
+                progress_callback=update_progress,
+                lang=lang
             )
         except Exception as e:
-            log_event(f"[❌] Помилка під час синхронізації: {e}")
+            err_msg = f"[❌] Synchronization error: {e}" if lang == "en" else f"[❌] Помилка під час синхронізації: {e}"
+            log_event(err_msg)
         finally:
             state["task_running"] = False
             state["task_type"] = None
             state["task_progress"] = None
-            log_event("=== Синхронізацію повідомлень завершено ===")
+            end_msg = "=== Message synchronization completed ===" if lang == "en" else "=== Синхронізацію повідомлень завершено ==="
+            log_event(end_msg)
 
     background_tasks.add_task(run_fetch)
     return {"status": "started"}
 
 
 @app.post("/api/actions/analyze")
-async def action_analyze(background_tasks: BackgroundTasks):
+async def action_analyze(background_tasks: BackgroundTasks, lang: str = "uk"):
     """Triggers full analytics and visualization pipeline."""
     if state["task_running"]:
-        return JSONResponse({"status": "error", "message": "Завдання вже виконується"}, status_code=400)
+        err_msg = "Task is already in progress" if lang == "en" else "Завдання вже виконується"
+        return JSONResponse({"status": "error", "message": err_msg}, status_code=400)
 
     state["task_running"] = True
     state["task_type"] = "analyze"
-    log_event("=== Запуск повного аналізу та генерації інфографіки ===")
+    start_msg = "=== Starting full analytics and infographics generation ===" if lang == "en" else "=== Запуск повного аналізу та генерації інфографіки ==="
+    log_event(start_msg)
 
     def run_analyze_sync():
         try:
-            run_full_pipeline(log_callback=log_event)
+            run_full_pipeline(log_callback=log_event, lang=lang)
         except Exception as e:
-            log_event(f"[❌] Помилка під час аналізу: {e}")
+            err_msg = f"[❌] Pipeline error: {e}" if lang == "en" else f"[❌] Помилка під час аналізу: {e}"
+            log_event(err_msg)
         finally:
             state["task_running"] = False
             state["task_type"] = None
-            log_event("=== Аналіз та генерацію графіків завершено ===")
+            end_msg = "=== Analysis and charts generation completed ===" if lang == "en" else "=== Аналіз та генерацію графіків завершено ==="
+            log_event(end_msg)
 
     background_tasks.add_task(asyncio.to_thread, run_analyze_sync)
     return {"status": "started"}

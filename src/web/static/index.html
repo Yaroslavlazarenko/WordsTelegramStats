@@ -21,22 +21,32 @@
     <div class="nav-tabs">
         <button class="nav-tab active" data-tab="gallery">
             <i data-lucide="image"></i>
-            <span>Інфографіка</span>
+            <span data-i18n="nav_gallery">Інфографіка</span>
         </button>
         <button class="nav-tab" data-tab="report">
             <i data-lucide="file-text"></i>
-            <span>Текстовий звіт</span>
+            <span data-i18n="nav_report">Текстовий звіт</span>
         </button>
         <button class="nav-tab" data-tab="logs">
             <i data-lucide="terminal"></i>
-            <span>Термінал та Логи</span>
+            <span data-i18n="nav_logs">Термінал та Логи</span>
         </button>
     </div>
     <div class="header-actions">
+        <div class="lang-switch" id="lang-switch" title="Змінити мову / Switch language">
+            <button class="lang-btn active" data-lang="uk" type="button" onclick="setLanguage('uk')">
+                <span class="lang-flag">🇺🇦</span>
+                <span>UA</span>
+            </button>
+            <button class="lang-btn" data-lang="en" type="button" onclick="setLanguage('en')">
+                <span class="lang-flag">🇬🇧</span>
+                <span>EN</span>
+            </button>
+        </div>
         <div id="auth-actions-container"></div>
         <div class="auth-badge" id="auth-badge">
             <span class="status-dot offline" id="status-dot"></span>
-            <span id="status-text">Перевірка...</span>
+            <span id="status-text" data-i18n="status_checking">Перевірка...</span>
         </div>
     </div>
 </header>
@@ -46,52 +56,52 @@
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-card-header">
-                <div class="stat-title">Особисті чати</div>
+                <div class="stat-title" data-i18n="stat_chats_title">Особисті чати</div>
                 <div class="stat-icon stat-icon-blue"><i data-lucide="users"></i></div>
             </div>
             <div class="stat-value" id="stat-chats">—</div>
-            <div class="stat-sub">Окремих баз SQLite</div>
+            <div class="stat-sub" data-i18n="stat_chats_sub">Окремих баз SQLite</div>
         </div>
         <div class="stat-card">
             <div class="stat-card-header">
-                <div class="stat-title">Надіслано повідомлень</div>
+                <div class="stat-title" data-i18n="stat_messages_title">Надіслано повідомлень</div>
                 <div class="stat-icon stat-icon-cyan"><i data-lucide="message-square"></i></div>
             </div>
             <div class="stat-value" id="stat-messages">—</div>
-            <div class="stat-sub">Лише ваші вихідні повідомлення (from_user)</div>
+            <div class="stat-sub" data-i18n="stat_messages_sub">Лише ваші вихідні повідомлення (from_user)</div>
         </div>
         <div class="stat-card">
             <div class="stat-card-header">
-                <div class="stat-title">Період активності</div>
+                <div class="stat-title" data-i18n="stat_period_title">Період активності</div>
                 <div class="stat-icon stat-icon-purple"><i data-lucide="calendar"></i></div>
             </div>
             <div class="stat-value" id="stat-period">—</div>
-            <div class="stat-sub">Охоплення історії</div>
+            <div class="stat-sub" data-i18n="stat_period_sub">Охоплення історії</div>
         </div>
         <div class="stat-card">
             <div class="stat-card-header">
-                <div class="stat-title">Графіків згенеровано</div>
+                <div class="stat-title" data-i18n="stat_infographics_title">Графіків згенеровано</div>
                 <div class="stat-icon stat-icon-emerald"><i data-lucide="pie-chart"></i></div>
             </div>
             <div class="stat-value" id="stat-infographics">—</div>
-            <div class="stat-sub">Інфографіка високої якості</div>
+            <div class="stat-sub" data-i18n="stat_infographics_sub">Інфографіка високої якості</div>
         </div>
     </div>
 
     <!-- Action Bar -->
     <div class="action-bar">
         <div>
-            <h3 style="font-weight: 700; color: #fff;">Управління пайплайном</h3>
-            <p style="font-size: 0.85rem; color: var(--text-dim);">Синхронізація виключно ваших вихідних повідомлень (без повідомлень співрозмовника) для персонального аналізу лише вашого стилю.</p>
+            <h3 style="font-weight: 700; color: #fff;" data-i18n="pipeline_title">Управління пайплайном</h3>
+            <p style="font-size: 0.85rem; color: var(--text-dim);" data-i18n="pipeline_desc">Синхронізація виключно ваших вихідних повідомлень (без повідомлень співрозмовника) для персонального аналізу лише вашого стилю.</p>
         </div>
         <div class="action-buttons">
             <button class="btn btn-secondary" id="btn-fetch" onclick="triggerFetch()">
                 <i data-lucide="download"></i>
-                <span>Синхронізувати повідомлення</span>
+                <span data-i18n="btn_fetch">Синхронізувати повідомлення</span>
             </button>
             <button class="btn btn-primary" id="btn-analyze" onclick="triggerAnalyze()">
                 <i data-lucide="play"></i>
-                <span>Запустити повний аналіз</span>
+                <span data-i18n="btn_analyze">Запустити повний аналіз</span>
             </button>
         </div>
     </div>
@@ -129,14 +139,14 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2 class="section-title" style="margin-bottom: 0;">
                     <i data-lucide="file-text"></i>
-                    <span>Повний лінгвістичний звіт (advanced_report.txt)</span>
+                    <span data-i18n="report_section_title">Повний лінгвістичний звіт (advanced_report.txt)</span>
                 </h2>
                 <button class="btn btn-secondary" onclick="loadReport()">
                     <i data-lucide="rotate-cw"></i>
-                    <span>Оновити</span>
+                    <span data-i18n="btn_refresh">Оновити</span>
                 </button>
             </div>
-            <pre class="report-view" id="report-content">Завантаження звіту...</pre>
+            <pre class="report-view" id="report-content" data-i18n="report_loading">Завантаження звіту...</pre>
         </div>
     </div>
 
@@ -146,11 +156,11 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2 class="section-title" style="margin-bottom: 0;">
                     <i data-lucide="terminal"></i>
-                    <span>Лайв-термінал процесів</span>
+                    <span data-i18n="logs_section_title">Лайв-термінал процесів</span>
                 </h2>
             </div>
             <div class="logs-container" id="logs-terminal">
-                <div class="log-entry highlight">[System] Готовий до роботи. Натисніть дію вище для запуску.</div>
+                <div class="log-entry highlight" id="logs-default-entry" data-i18n="logs_ready">[System] Готовий до роботи. Натисніть дію вище для запуску.</div>
             </div>
         </div>
     </div>
@@ -160,8 +170,8 @@
 <div class="modal" id="chart-modal" onclick="if(event.target === this) closeModal()">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modal-title" style="font-weight: 700; color: #fff;">Графік</h3>
-            <button class="close-btn" onclick="closeModal()">
+            <h3 id="modal-title" style="font-weight: 700; color: #fff;" data-i18n="modal_chart_title">Графік</h3>
+            <button class="close-btn" onclick="closeModal()" title="Close">
                 <i data-lucide="x"></i>
             </button>
         </div>
@@ -173,18 +183,18 @@
                 <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 16px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; margin-bottom: 1.25rem;">
                     <i data-lucide="shield-check" style="width: 36px; height: 36px;"></i>
                 </div>
-                <h3 style="color: #fff; font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Двоетапна перевірка (2FA)</h3>
-                <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4;">
+                <h3 style="color: #fff; font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;" data-i18n="modal_2fa_title">Двоетапна перевірка (2FA)</h3>
+                <p style="color: var(--text-dim); font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4;" data-i18n="modal_2fa_desc">
                     Ваш обліковий запис захищений паролем. Введіть його для завершення авторизації.
                 </p>
                 <div style="display: flex; flex-direction: column; gap: 0.85rem;">
-                    <input type="password" id="modal-2fa-input" placeholder="Введіть 2FA пароль"
+                    <input type="password" id="modal-2fa-input" placeholder="Введіть 2FA пароль" data-i18n-placeholder="modal_2fa_placeholder"
                            style="padding: 0.85rem 1.1rem; border-radius: 10px; border: 1px solid var(--card-border); background: #0f1422; color: #fff; font-size: 0.95rem; width: 100%; outline: none; transition: border-color 0.2s;"
                            onkeydown="if(event.key === 'Enter') submitModal2FA()">
                     <div id="modal-2fa-error" style="color: var(--danger); font-size: 0.85rem; text-align: left; display: none;"></div>
                     <button class="btn btn-primary" style="justify-content: center; padding: 0.85rem; font-size: 0.95rem; width: 100%;" onclick="submitModal2FA()" id="btn-modal-2fa">
                         <i data-lucide="key"></i>
-                        <span>Підтвердити пароль</span>
+                        <span data-i18n="btn_confirm_2fa">Підтвердити пароль</span>
                     </button>
                 </div>
             </div>

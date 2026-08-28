@@ -27,11 +27,12 @@ from src.visualization.linguistic import generate_linguistic_charts
 from src.visualization.social import generate_social_charts
 
 
-def run_text_analysis(log_callback: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
+def run_text_analysis(log_callback: Optional[Callable[[str], None]] = None, lang: str = "uk") -> Dict[str, Any]:
     """
     Runs textual and corpus frequency analysis across chats, years, all-time,
     and generates advanced_report.txt and words_lists/ files.
     """
+    is_en = lang == "en"
     lines: List[str] = []
 
     def log(msg: str = "") -> None:
@@ -43,17 +44,26 @@ def run_text_analysis(log_callback: Optional[Callable[[str], None]] = None) -> D
 
     chats, filt = load_chats()
     if not chats:
-        log("[❌] Не знайдено даних для аналізу. Спочатку синхронізуйте повідомлення.")
+        no_data_msg = "[❌] No data found for analysis. Please sync messages first." if is_en else "[❌] Не знайдено даних для аналізу. Спочатку синхронізуйте повідомлення."
+        log(no_data_msg)
         return {"status": "no_data"}
 
+    header_title = " ADVANCED TELEGRAM WORD STATS ANALYSIS" if is_en else " РОЗШИРЕНИЙ АНАЛІЗ СТАТИСТИКИ СЛІВ TELEGRAM"
     log("=" * 78)
-    log(" РОЗШИРЕНИЙ АНАЛІЗ СТАТИСТИКИ СЛІВ TELEGRAM")
+    log(header_title)
     log("=" * 78)
-    log(f"Діалогів з повідомленнями:    {len(chats)}")
-    log(f"Всього повідомлень переглянуто:{filt['total']:>8}")
-    log(f"  [-] пересланих (forward):   {filt['forwarded']:>8}")
-    log(f"  [-] цитат/копіпастів/посилань:{filt['noise']:>8}")
-    log(f"  [+] чистих (моє мовлення):   {filt['clean']:>8}")
+    if is_en:
+        log(f"Dialogues with messages:         {len(chats)}")
+        log(f"Total messages inspected:        {filt['total']:>8}")
+        log(f"  [-] forwarded (forward):       {filt['forwarded']:>8}")
+        log(f"  [-] quotes/copypastes/links:   {filt['noise']:>8}")
+        log(f"  [+] clean (author speech):     {filt['clean']:>8}")
+    else:
+        log(f"Діалогів з повідомленнями:    {len(chats)}")
+        log(f"Всього повідомлень переглянуто:{filt['total']:>8}")
+        log(f"  [-] пересланих (forward):   {filt['forwarded']:>8}")
+        log(f"  [-] цитат/копіпастів/посилань:{filt['noise']:>8}")
+        log(f"  [+] чистих (моє мовлення):   {filt['clean']:>8}")
 
     # 1. За кожним чатом
     log("\n" + "=" * 78)
@@ -205,14 +215,17 @@ def run_text_analysis(log_callback: Optional[Callable[[str], None]] = None) -> D
     with open(REPORT_FILE, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
-    log("\n[✔] Текстовий звіт збережено у: " + str(REPORT_FILE))
+    saved_report_msg = f"\n[✔] Text report saved to: {REPORT_FILE}" if is_en else f"\n[✔] Текстовий звіт збережено у: {REPORT_FILE}"
+    log(saved_report_msg)
     return {"status": "ok", "chats_count": len(chats), "clean_messages": filt["clean"]}
 
 
-def run_full_pipeline(log_callback: Optional[Callable[[str], None]] = None) -> None:
+def run_full_pipeline(log_callback: Optional[Callable[[str], None]] = None, lang: str = "uk") -> None:
     """
     Executes the complete end-to-end data analytics and visual rendering pipeline.
     """
+    is_en = lang == "en"
+
     def log(msg: str) -> None:
         if log_callback:
             log_callback(msg)
@@ -220,35 +233,42 @@ def run_full_pipeline(log_callback: Optional[Callable[[str], None]] = None) -> N
             print(msg)
 
     start_time = time.time()
+    header_pipeline = " STARTING FULL ANALYTICS AND INFOGRAPHICS PIPELINE" if is_en else " ПОЧАТОК ПОВНОГО ПАЙПЛАЙНУ АНАЛІТИКИ ТА ГЕНЕРАЦІЇ ІНФОГРАФІКИ"
     log("================================================================")
-    log(" ПОЧАТОК ПОВНОГО ПАЙПЛАЙНУ АНАЛІТИКИ ТА ГЕНЕРАЦІЇ ІНФОГРАФІКИ")
+    log(header_pipeline)
     log("================================================================")
 
     # 1. Текстовий аналіз
-    log("\n[1/5] Запуск текстового аналізу та частотних списків...")
-    run_text_analysis(log_callback=log)
+    step1_msg = "\n[1/5] Running text analysis and frequency wordlists..." if is_en else "\n[1/5] Запуск текстового аналізу та частотних списків..."
+    log(step1_msg)
+    run_text_analysis(log_callback=log, lang=lang)
 
     chats, _ = load_chats()
     if not chats:
-        log("[❌] Немає даних для побудови графіків.")
+        no_chart_msg = "[❌] No data available for chart rendering." if is_en else "[❌] Немає даних для побудови графіків."
+        log(no_chart_msg)
         return
 
     # 2. Базова інфографіка
-    log("\n[2/5] Генерація базової інфографіки...")
+    step2_msg = "\n[2/5] Generating core & basic infographics..." if is_en else "\n[2/5] Генерація базової інфографіки..."
+    log(step2_msg)
     generate_basic_charts(chats)
 
     # 3. Поведінкова інфографіка
-    log("\n[3/5] Генерація інфографіки поведінки, сну та ритму...")
+    step3_msg = "\n[3/5] Generating behavioral, sleep & rhythm infographics..." if is_en else "\n[3/5] Генерація інфографіки поведінки, сну та ритму..."
+    log(step3_msg)
     generate_behavioral_charts(chats)
 
     # 4. Лінгвістична інфографіка
-    log("\n[4/5] Генерація лінгвістичної інфографіки та словника...")
+    step4_msg = "\n[4/5] Generating linguistic & vocabulary infographics..." if is_en else "\n[4/5] Генерація лінгвістичної інфографіки та словника..."
+    log(step4_msg)
     generate_linguistic_charts(chats)
 
     # 5. Соціальна інфографіка
-    log("\n[5/5] Генерація інфографіки стосунків та кластеризації...")
+    step5_msg = "\n[5/5] Generating relationship & clustering infographics..." if is_en else "\n[5/5] Генерація інфографіки стосунків та кластеризації..."
+    log(step5_msg)
     generate_social_charts(chats)
 
     elapsed = time.time() - start_time
-    done_msg = f"\n[✔] Повний пайплайн успішно завершено за {elapsed:.1f} сек!"
+    done_msg = f"\n[✔] Full pipeline successfully completed in {elapsed:.1f} sec!" if is_en else f"\n[✔] Повний пайплайн успішно завершено за {elapsed:.1f} сек!"
     log(done_msg)

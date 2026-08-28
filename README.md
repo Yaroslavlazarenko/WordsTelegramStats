@@ -1,3 +1,7 @@
+<p align="right">
+  <strong>🌐 Language / Мова:</strong> <b>Українська</b> | <a href="README_EN.md">English</a>
+</p>
+
 # WordsTelegramStats 📊 🧠 💬
 
 <p align="center">
