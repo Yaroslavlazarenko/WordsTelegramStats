@@ -1,0 +1,76 @@
+# ===========================================================================
+# WordsTelegramStats .gitignore
+# ===========================================================================
+
+# 1. Telegram Sessions & Credentials (CRITICAL for privacy & security)
+*.session
+*.session-journal
+telegram_words_stats.session
+telegram_words_stats.session-journal
+
+# 2. User Data & SQLite Databases (Personal chat history)
+chats_data/
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# 3. Generated Analysis Artifacts & Infographics
+infographics/
+words_lists/
+advanced_report.txt
+*.png
+
+# 4. Cache & Temporary Storage
+.cache/
+.vexp/
+*.cache
+
+# 5. Python Bytecode & Compilation
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 6. Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+.env/
+
+# 7. Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# 8. IDE & Editor Artifacts
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 9. Logs & Runtime
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

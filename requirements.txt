@@ -1,0 +1,19 @@
+# Core Telegram & Web UI
+telethon>=1.36.0
+fastapi>=0.115.0
+uvicorn>=0.30.0
+qrcode>=7.4.2
+pillow>=10.0.0
+python-dateutil>=2.9.0
+
+# NLP, Lemmatization & Linguistics
+pymorphy3>=2.0.2
+pymorphy3-dicts-ru>=2.4.417150.4580142
+pymorphy3-dicts-uk>=2.4.1.1.1663094765
+wordfreq>=3.1.0
+
+# Analytics, Statistics & Visualization
+numpy>=1.26.0
+scipy>=1.14.0
+matplotlib>=3.9.0
+wordcloud>=1.9.3

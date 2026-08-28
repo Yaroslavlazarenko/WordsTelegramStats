@@ -1,0 +1,48 @@
+# -*- coding: utf-8 -*-
+"""Core package: configuration and common definitions."""
+
+from .config import (
+    BASE_DIR,
+    DATA_DIR,
+    INFOGRAPHICS_DIR,
+    WORDS_LISTS_DIR,
+    CACHE_DIR,
+    REPORT_FILE,
+    API_ID,
+    API_HASH,
+    SESSION_NAME,
+    TZ_OFFSET_HOURS,
+    REF_RU_PATH,
+    BG_COLOR,
+    FG_COLOR,
+    ACCENT_COLOR,
+    ACCENT2_COLOR,
+    ACCENT3_COLOR,
+    GRID_COLOR,
+    PALETTE,
+    MONTHS_UK,
+    DAYS_UK,
+)
+
+__all__ = [
+    "BASE_DIR",
+    "DATA_DIR",
+    "INFOGRAPHICS_DIR",
+    "WORDS_LISTS_DIR",
+    "CACHE_DIR",
+    "REPORT_FILE",
+    "API_ID",
+    "API_HASH",
+    "SESSION_NAME",
+    "TZ_OFFSET_HOURS",
+    "REF_RU_PATH",
+    "BG_COLOR",
+    "FG_COLOR",
+    "ACCENT_COLOR",
+    "ACCENT2_COLOR",
+    "ACCENT3_COLOR",
+    "GRID_COLOR",
+    "PALETTE",
+    "MONTHS_UK",
+    "DAYS_UK",
+]

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  words-telegram-stats:
+    build: .
+    container_name: words-telegram-stats
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persistent storage for downloaded chats, generated infographics, and word lists
+      - ./chats_data:/app/chats_data
+      - ./infographics:/app/infographics
+      - ./words_lists:/app/words_lists
+      - ./.cache:/app/.cache
+      # Persist Telegram login session
+      - ./telegram_words_stats.session:/app/telegram_words_stats.session
+    environment:
+      - PORT=8000
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
