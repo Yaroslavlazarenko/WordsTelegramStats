@@ -20,6 +20,7 @@ infographics/
 words_lists/
 advanced_report.txt
 *.png
+!docs/images/*.png
 
 # 4. Cache & Temporary Storage
 .cache/
