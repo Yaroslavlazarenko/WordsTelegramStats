@@ -28,7 +28,7 @@ def get_telegram_client() -> TelegramClient:
 
 
 async def reset_telegram_client() -> None:
-    """Logs out and resets the Telegram client instance, removing session files."""
+    """Logs out and resets the Telegram client instance, safely clearing session files without breaking Docker mounts."""
     global _client_instance
     if _client_instance is not None:
         try:
@@ -40,10 +40,20 @@ async def reset_telegram_client() -> None:
             pass
         _client_instance = None
 
-    # Clean up session file on disk
+    # Safely truncate session files without unlinking to avoid breaking Docker volume file mounts
     session_file = Path(SESSION_NAME + ".session")
     session_journal = Path(SESSION_NAME + ".session-journal")
+
     if session_file.exists():
-        session_file.unlink(missing_ok=True)
+        try:
+            with open(session_file, "wb") as f:
+                f.truncate(0)
+        except Exception:
+            pass
+
     if session_journal.exists():
-        session_journal.unlink(missing_ok=True)
+        try:
+            with open(session_journal, "wb") as f:
+                f.truncate(0)
+        except Exception:
+            pass
