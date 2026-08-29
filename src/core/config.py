@@ -70,11 +70,15 @@ class AppSettings(BaseSettings):
         # Migrate legacy session file if present in root
         session_legacy = self.dir_base / "telegram_words_stats.session"
         session_current = self.dir_session / "telegram_words_stats.session"
-        if session_legacy.is_file() and not session_current.exists():
-            try:
-                shutil.copy2(session_legacy, session_current)
-            except OSError:
-                pass
+        if session_legacy.is_file():
+            if not session_current.exists() or (
+                session_legacy.stat().st_size > session_current.stat().st_size
+                and session_legacy.stat().st_mtime > session_current.stat().st_mtime
+            ):
+                try:
+                    shutil.copy2(session_legacy, session_current)
+                except OSError:
+                    pass
 
 
 # Global settings singleton

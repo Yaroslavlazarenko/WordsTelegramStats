@@ -2,27 +2,38 @@
 Linguistic pattern detectors: profanity, laughter styles, address forms (ty/vy), and vocabulary categories.
 """
 
+import json
 import re
+from pathlib import Path
 
 from src.nlp.lemmatizer import LATIN_RE, word_known
 
-# Profanity roots (Russian / Ukrainian)
-MAT_ROOTS = (
-    "хуй", "хуё", "хуе", "хуя", "хуи", "хую", "хует",
-    "пизд", "еба", "ебал", "ебан", "ебл", "ебу", "ёба", "ёбн", "єба", "єбл", "єбу",
-    "наеб", "уеб", "выеб", "въеб", "заеб", "доеб", "подъеб", "отъеб", "съеб", "проеб",
-    "наєб", "заєб", "доєб", "підєб", "відєб", "проєб",
-    "бля", "блят", "блядь", "сука", "суки", "сукин", "суча",
-    "ахуе", "ахуи", "охуе", "охуи", "нахуй", "похуй", "нихуя", "дохуя", "ахуё", "охуё",
-    "ахує", "охує", "ніхуя",
-    "мудак", "мудил", "мудоз", "говн", "гавн", "долбоеб", "долбоёб", "довбойоб",
-    "залуп", "пидор", "пидар", "гондон", "гандон", "пизж", "спизд", "распизд",
-)
+# Load profanity dictionary sourced from Valve Steam Text Filter repository
+_DATA_PATH = Path(__file__).resolve().parent / "data" / "steam_profanity.json"
+
+_STEAM_WORDS: set[str] = set()
+_STEAM_PATTERN: re.Pattern | None = None
+
+if _DATA_PATH.exists():
+    with open(_DATA_PATH, encoding="utf-8") as _f:
+        _data = json.load(_f)
+        _STEAM_WORDS = set(_data.get("words", []))
+        _raw_patterns = _data.get("patterns", [])
+        if _raw_patterns:
+            _STEAM_PATTERN = re.compile(
+                "|".join(f"(?:{p})" for p in _raw_patterns),
+                re.IGNORECASE,
+            )
 
 
 def is_mat(word: str) -> bool:
-    """Checks if a word starts with any known profanity root."""
-    return any(word.startswith(r) for r in MAT_ROOTS)
+    """Checks if a word matches known profanities from the Steam filter repository."""
+    w = word.lower()
+    if w in _STEAM_WORDS:
+        return True
+    if _STEAM_PATTERN and _STEAM_PATTERN.search(w):
+        return True
+    return False
 
 
 # Regex for chat laughter variants (e.g., 'хаха', 'хпхвх', 'ахах', etc.)

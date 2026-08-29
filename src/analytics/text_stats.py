@@ -12,6 +12,7 @@ from typing import Any
 
 from wordfreq import zipf_frequency
 
+from src.nlp.detectors import LAUGH_RE
 from src.nlp.lemmatizer import WORD_RE, detect_lang, is_stop_word, tokenize
 from src.nlp.reference import build_ru_lemma_reference
 
@@ -136,7 +137,8 @@ def compute_zipf_comparison(
         my_zipf = math.log10(c / totals[lang] * 1e9)
         ref_zipf = ru_ref.get(w, 0) if lang == "ru" else zipf_frequency(w, lang)
         if ref_zipf == 0:
-            personal.append((w, lang, c, my_zipf))
+            if not LAUGH_RE.match(w):
+                personal.append((w, lang, c, my_zipf))
         else:
             records.append((w, lang, c, my_zipf, ref_zipf, my_zipf - ref_zipf))
 

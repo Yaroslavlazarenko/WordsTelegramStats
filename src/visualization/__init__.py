@@ -42,6 +42,7 @@ from .social import (
     chart_relationships_timeline,
     chart_social_breadth,
     chart_speech_clustering,
+    chart_speech_similarity_matrix,
     chart_streamgraph,
     chart_ty_vy,
     generate_social_charts,
@@ -97,5 +98,6 @@ __all__ = [
     "chart_social_breadth",
     "chart_relationships_timeline",
     "chart_speech_clustering",
+    "chart_speech_similarity_matrix",
     "generate_social_charts",
 ]

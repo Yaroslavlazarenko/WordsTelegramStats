@@ -288,10 +288,14 @@ def chart_relationships_timeline(chats: list[dict[str, Any]], top_n: int = 25) -
     save_figure(fig, "relationships_timeline.png")
 
 
-def chart_speech_clustering(chats: list[dict[str, Any]], top_n: int = 20) -> None:
+def _compute_speech_similarity_data(
+    chats: list[dict[str, Any]],
+    top_n: int = 20,
+) -> tuple[list[str], np.ndarray, np.ndarray, np.ndarray] | None:
+    """Computes similarity matrix and hierarchical linkage for top chats."""
     top = sorted(chats, key=lambda c: len(c["messages"]), reverse=True)[:top_n]
     if len(top) < 3:
-        return
+        return None
     ru_ref = build_ru_lemma_reference()
 
     vecs = []
@@ -310,7 +314,7 @@ def chart_speech_clustering(chats: list[dict[str, Any]], top_n: int = 20) -> Non
 
     vocab = sorted({w for c in vecs for w, n in c.items() if n >= 5})
     if not vocab:
-        return
+        return None
     vidx = {w: i for i, w in enumerate(vocab)}
     M = np.zeros((len(top), len(vocab)))
     for r, c in enumerate(vecs):
@@ -330,37 +334,73 @@ def chart_speech_clustering(chats: list[dict[str, Any]], top_n: int = 20) -> Non
     try:
         Z = linkage(squareform(D, checks=False), method="average")
     except Exception:
+        return None
+
+    titles = [ch["title"][:22] for ch in top]
+    return titles, S, D, Z
+
+
+def chart_speech_clustering(chats: list[dict[str, Any]], top_n: int = 20) -> None:
+    """Generates standalone hierarchical clustering dendrogram tree (speech_clustering.png)."""
+    data = _compute_speech_similarity_data(chats, top_n)
+    if data is None:
         return
+    titles, _, _, Z = data
 
-    fig = plt.figure(figsize=(13, 9), facecolor=BG_COLOR)
-    gs = fig.add_gridspec(1, 2, width_ratios=[1, 1.4], wspace=0.05)
+    fig = create_figure(14, 8)
+    ax = fig.add_subplot(111)
 
-    ax_d = fig.add_subplot(gs[0])
-    dn = dendrogram(
+    dendrogram(
         Z,
-        orientation="left",
-        no_labels=True,
+        labels=titles,
+        orientation="top",
+        leaf_rotation=35,
+        leaf_font_size=9,
         color_threshold=0.7 * max(Z[:, 2]),
-        ax=ax_d,
+        ax=ax,
     )
-    ax_d.set_facecolor(BG_COLOR)
-    ax_d.tick_params(colors=FG_COLOR, labelsize=9)
-    for s in ax_d.spines.values():
-        s.set_visible(False)
-    ax_d.set_title("Кластери: кому дістається «схожий я»", color=FG_COLOR, fontsize=13, fontweight="bold")
 
-    order = dn["leaves"][::-1]
-    ax_h = fig.add_subplot(gs[1])
-    im = ax_h.imshow(S[np.ix_(order, order)], cmap="viridis", vmin=0, vmax=1)
-    ax_h.set_xticks(range(len(top)))
-    ax_h.set_xticklabels([top[i]["title"][:14] for i in order], rotation=90, fontsize=8, color=FG_COLOR)
-    ax_h.yaxis.tick_right()
-    ax_h.set_yticks(range(len(top)))
-    ax_h.set_yticklabels([top[i]["title"][:20] for i in order], fontsize=8, color=FG_COLOR)
-    ax_h.set_title("Схожість мовлення (косинус)", color=FG_COLOR, fontsize=13, fontweight="bold")
-    cbar = fig.colorbar(im, ax=ax_h, fraction=0.04, pad=0.22)
-    cbar.ax.tick_params(colors=FG_COLOR)
+    apply_style(ax, "Кластеризація співрозмовників за подібністю вашого словника")
+    ax.set_ylabel("Лінгвістична дистанція (Косинусна відстань)")
+    ax.grid(axis="y", color=GRID_COLOR, alpha=0.3)
+    ax.tick_params(axis="x", colors=FG_COLOR, labelsize=9)
+    ax.tick_params(axis="y", colors=FG_COLOR, labelsize=9)
+    plt.setp(ax.get_xticklabels(), ha="right", rotation_mode="anchor")
+
+    fig.tight_layout()
     save_figure(fig, "speech_clustering.png")
+
+
+def chart_speech_similarity_matrix(chats: list[dict[str, Any]], top_n: int = 20) -> None:
+    """Generates standalone cosine similarity heatmap matrix (speech_similarity_matrix.png)."""
+    data = _compute_speech_similarity_data(chats, top_n)
+    if data is None:
+        return
+    titles, S, _, Z = data
+
+    # Order by dendrogram leaves so clustered chats are grouped together
+    dn = dendrogram(Z, no_plot=True)
+    order = dn["leaves"]
+    ordered_titles = [titles[i] for i in order]
+    ordered_S = S[np.ix_(order, order)]
+
+    fig = create_figure(12, 10)
+    ax = fig.add_subplot(111)
+
+    im = ax.imshow(ordered_S, cmap="viridis", vmin=0, vmax=1)
+    apply_style(ax, "Матриця схожості лексичного стилю (косинус)")
+
+    ax.set_xticks(range(len(ordered_titles)))
+    ax.set_xticklabels(ordered_titles, rotation=45, ha="right", fontsize=8, color=FG_COLOR)
+    ax.set_yticks(range(len(ordered_titles)))
+    ax.set_yticklabels(ordered_titles, fontsize=8, color=FG_COLOR)
+
+    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar.ax.tick_params(colors=FG_COLOR)
+    cbar.set_label("Косинусна схожість", color=FG_COLOR, fontsize=10)
+
+    fig.tight_layout()
+    save_figure(fig, "speech_similarity_matrix.png")
 
 
 def generate_social_charts(chats: list[dict[str, Any]]) -> None:
@@ -373,3 +413,4 @@ def generate_social_charts(chats: list[dict[str, Any]]) -> None:
     chart_social_breadth(chats)
     chart_relationships_timeline(chats)
     chart_speech_clustering(chats)
+    chart_speech_similarity_matrix(chats)

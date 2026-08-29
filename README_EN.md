@@ -221,6 +221,7 @@ Hierarchical clustering of interlocutors based on similarity in vocabulary and l
 | | `relationships_timeline.png`| Lifecycles and active periods of dialogues |
 | | `chat_fingerprint.png` | Distinctive TF-IDF keywords unique to each dialogue |
 | | `speech_clustering.png` | Dendrogram of conversational style similarity |
+| | `speech_similarity_matrix.png` | Heatmap of pairwise vocabulary cosine similarity |
 | | `social_breadth.png` | Social breadth: active monthly contacts count |
 | | `ty_vy.png` | Balance of informal vs formal addressing (Ty / Vy) |
 | | `mat_per_chat.png` | Distribution of profanity across specific chats |

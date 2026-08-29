@@ -2,7 +2,6 @@
 
 from .detectors import (
     LAUGH_RE,
-    MAT_ROOTS,
     categorize_vocab_word,
     is_mat,
     is_ty,
@@ -36,7 +35,6 @@ __all__ = [
     "UK_LETTERS_RE",
     "build_ru_lemma_reference",
     "is_mat",
-    "MAT_ROOTS",
     "LAUGH_RE",
     "laugh_family",
     "is_ty",

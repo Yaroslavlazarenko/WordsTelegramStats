@@ -116,7 +116,8 @@ const translations = {
             'chat_fingerprint.png': { title: 'Лінгвістичні відбитки чатів', desc: 'Характерні слова для кожного контакту (TF-IDF)' },
             'ty_vy.png': { title: 'Ти / Ви', desc: 'Рівень формальності та пропорція звертань' },
             'mat_per_chat.png': { title: 'Мат за чатами', desc: 'Розподіл ненормативної лексики по конкретних діалогах' },
-            'speech_clustering.png': { title: 'Кластеризація мовлення', desc: 'Дендрограма схожості лексичного стилю з різними людьми' }
+            'speech_clustering.png': { title: 'Кластеризація мовлення', desc: 'Дендрограма схожості лексичного стилю з різними людьми' },
+            'speech_similarity_matrix.png': { title: 'Матриця схожості стилю', desc: 'Теплова карта попарної косинусної схожості лексики між чатами' }
         }
     },
     en: {
@@ -233,7 +234,8 @@ const translations = {
             'chat_fingerprint.png': { title: 'Chat Fingerprints (TF-IDF)', desc: 'Distinctive keywords unique to specific contacts' },
             'ty_vy.png': { title: 'Formality Index (Ty/Vy)', desc: 'Ratio of informal vs formal addressing' },
             'mat_per_chat.png': { title: 'Profanity by Chat', desc: 'Distribution of profanity across individual chats' },
-            'speech_clustering.png': { title: 'Speech Style Clustering', desc: 'Dendrogram of vocabulary style similarity across contacts' }
+            'speech_clustering.png': { title: 'Speech Style Clustering', desc: 'Dendrogram of vocabulary style similarity across contacts' },
+            'speech_similarity_matrix.png': { title: 'Speech Style Similarity Matrix', desc: 'Heatmap of pairwise vocabulary cosine similarity across chats' }
         }
     }
 };
