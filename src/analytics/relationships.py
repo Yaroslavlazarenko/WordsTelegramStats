@@ -1,19 +1,18 @@
-# -*- coding: utf-8 -*-
 """
 Social and relational analytics: chat fingerprints, Ty/Vy balance, profanity by chat,
 and vocabulary clustering across dialogs.
 """
 
-from collections import Counter, defaultdict
-from typing import List, Dict, Any, Tuple
+from collections import Counter
+from typing import Any
+
 import numpy as np
 
-from src.data.loader import parse_local_dt
-from src.nlp.lemmatizer import tokenize, is_stop_word
-from src.nlp.detectors import is_ty, is_vy, is_mat, LAUGH_RE
+from src.nlp.detectors import LAUGH_RE, is_mat, is_ty, is_vy
+from src.nlp.lemmatizer import is_stop_word, tokenize
 
 
-def compute_ty_vy_balance(chats: List[Dict[str, Any]], min_msgs: int = 50) -> List[Dict[str, Any]]:
+def compute_ty_vy_balance(chats: list[dict[str, Any]], min_msgs: int = 50) -> list[dict[str, Any]]:
     """
     Calculates proportion of informal (ty) vs formal/group (vy) pronouns per chat.
     """
@@ -41,7 +40,7 @@ def compute_ty_vy_balance(chats: List[Dict[str, Any]], min_msgs: int = 50) -> Li
     return sorted(results, key=lambda x: x["total"], reverse=True)
 
 
-def compute_profanity_per_chat(chats: List[Dict[str, Any]], min_words: int = 1000) -> List[Dict[str, Any]]:
+def compute_profanity_per_chat(chats: list[dict[str, Any]], min_words: int = 1000) -> list[dict[str, Any]]:
     """
     Calculates profanity frequency per 1000 words across active chats.
     """
@@ -67,10 +66,10 @@ def compute_profanity_per_chat(chats: List[Dict[str, Any]], min_words: int = 100
 
 
 def compute_chat_clustering_data(
-    chats: List[Dict[str, Any]],
+    chats: list[dict[str, Any]],
     top_chats: int = 20,
     top_features: int = 500
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Computes TF-IDF / cosine similarity matrix for top dialogs based on vocabulary distribution.
     """
@@ -100,7 +99,7 @@ def compute_chat_clustering_data(
     w_to_idx = {w: i for i, w in enumerate(common_vocab)}
     vectors = np.zeros((len(active_chats), len(common_vocab)))
 
-    for i, (cnt, total) in enumerate(zip(chat_counters, chat_totals)):
+    for i, (cnt, total) in enumerate(zip(chat_counters, chat_totals, strict=False)):
         for w, c in cnt.items():
             if w in w_to_idx:
                 tf = c / total

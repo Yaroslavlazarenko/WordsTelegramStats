@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Visualization theming and plotting utilities for Matplotlib & WordCloud.
 Standardizes dark theme styling, typography, and palette across all generated charts.
@@ -6,21 +5,17 @@ Standardizes dark theme styling, typography, and palette across all generated ch
 
 import os
 from pathlib import Path
-from typing import Optional
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src.core.config import (
-    INFOGRAPHICS_DIR,
     BG_COLOR,
     FG_COLOR,
-    ACCENT_COLOR,
-    ACCENT2_COLOR,
-    ACCENT3_COLOR,
     GRID_COLOR,
-    PALETTE,
+    INFOGRAPHICS_DIR,
 )
 
 # Setup DejaVu Sans font (supports Cyrillic out of the box in matplotlib)
@@ -31,7 +26,7 @@ plt.rcParams["font.family"] = "DejaVu Sans"
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def apply_style(ax, title: Optional[str] = None) -> None:
+def apply_style(ax, title: str | None = None) -> None:
     """Applies dark theme styles to a matplotlib axes."""
     ax.set_facecolor(BG_COLOR)
     for s in ax.spines.values():

@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
 """
 Analysis of core vocabulary ("кістяк мовлення") — words consistently used across years.
 """
 
 from collections import Counter, defaultdict
-from typing import List, Dict, Any, Tuple
+from typing import Any
+
 import numpy as np
 
 from src.data.loader import parse_local_dt
-from src.nlp.lemmatizer import tokenize, is_stop_word
 from src.nlp.detectors import LAUGH_RE
+from src.nlp.lemmatizer import is_stop_word, tokenize
 
 MIN_YEAR_TOKENS = 20000
 MIN_PER_YEAR = 5
@@ -17,11 +17,11 @@ DEFAULT_TOP = 30
 
 
 def compute_core_vocabulary(
-    chats: List[Dict[str, Any]],
+    chats: list[dict[str, Any]],
     min_year_tokens: int = MIN_YEAR_TOKENS,
     min_per_year: int = MIN_PER_YEAR,
     top_n: int = DEFAULT_TOP
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Computes the stable vocabulary backbone across years.
     Returns:

@@ -1,20 +1,20 @@
-# -*- coding: utf-8 -*-
 """
 Linguistic style analysis: n-grams (collocations), POS evolution, and messaging rhythm.
 """
 
-from collections import Counter, defaultdict
-from typing import List, Dict, Any, Tuple
+from collections import Counter
+from typing import Any
+
 import numpy as np
 
 from src.data.loader import parse_local_dt
-from src.nlp.lemmatizer import raw_tokenize, tokenize, pos_of
+from src.nlp.lemmatizer import pos_of, raw_tokenize, tokenize
 
 
 def compute_ngrams(
-    chats: List[Dict[str, Any]],
+    chats: list[dict[str, Any]],
     top_n: int = 18
-) -> Tuple[List[Tuple[Tuple[str, str], int]], List[Tuple[Tuple[str, str, str], int]]]:
+) -> tuple[list[tuple[tuple[str, str], int]], list[tuple[tuple[str, str, str], int]]]:
     """
     Computes most frequent bigrams and trigrams from raw unlemmatized tokens.
     """
@@ -29,7 +29,7 @@ def compute_ngrams(
     return bi.most_common(top_n), tri.most_common(top_n)
 
 
-def compute_pos_evolution(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
+def compute_pos_evolution(chats: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Tracks proportion of parts of speech (nouns, verbs, adjectives, etc.) across years.
     """
@@ -72,7 +72,7 @@ def compute_pos_evolution(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-def compute_message_rhythm(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
+def compute_message_rhythm(chats: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Analyzes inter-message burst intervals and burstiness index.
     """
@@ -84,7 +84,7 @@ def compute_message_rhythm(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
             if dt:
                 dts.append(dt)
         dts.sort()
-        for a, b in zip(dts, dts[1:]):
+        for a, b in zip(dts, dts[1:], strict=False):
             s = (b - a).total_seconds()
             if 0 < s <= 3600 * 24:
                 gaps_sec.append(s)

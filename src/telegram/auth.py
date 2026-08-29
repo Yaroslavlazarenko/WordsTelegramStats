@@ -1,18 +1,18 @@
-# -*- coding: utf-8 -*-
 """
 Telegram QR login and 2FA authentication handlers.
 """
 
 import base64
 import io
-from typing import Dict, Any, Optional
+from typing import Any
+
 import qrcode
-from telethon import TelegramClient, errors
+from telethon import TelegramClient
 
 from src.telegram.client import get_telegram_client
 
 
-async def get_auth_state(client: Optional[TelegramClient] = None) -> Dict[str, Any]:
+async def get_auth_state(client: TelegramClient | None = None) -> dict[str, Any]:
     """Checks current authorization state and user info."""
     c = client or get_telegram_client()
     if not c.is_connected():

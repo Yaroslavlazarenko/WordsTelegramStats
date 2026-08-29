@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Telegram message fetcher.
 Downloads user's sent messages from 1-on-1 dialogs incrementally and saves them into SQLite databases.
@@ -7,13 +6,20 @@ Provides real-time detailed progress logging, download speed calculation, and re
 
 import asyncio
 import math
-import os
 import time
-from typing import Callable, Optional, Dict, Any, List
+from collections.abc import Callable
+from typing import Any
+
 from telethon import TelegramClient
 
 from src.core.config import DATA_DIR
-from src.data.db import get_safe_filename, init_chat_db, get_last_msg_id, save_messages_batch, get_dataset_summary
+from src.data.db import (
+    get_dataset_summary,
+    get_last_msg_id,
+    get_safe_filename,
+    init_chat_db,
+    save_messages_batch,
+)
 
 
 def format_eta(seconds: float, lang: str = "uk") -> str:
@@ -35,10 +41,10 @@ def format_eta(seconds: float, lang: str = "uk") -> str:
 
 async def fetch_messages_incremental(
     client: TelegramClient,
-    log_callback: Optional[Callable[[str], None]] = None,
-    progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+    log_callback: Callable[[str], None] | None = None,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
     lang: str = "uk"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Incrementally fetches sent messages for all active 1-on-1 personal dialogs.
     Computes real-time download speed (msg/s), overall progress %, and ETA.
@@ -51,7 +57,7 @@ async def fetch_messages_incremental(
         else:
             print(msg)
 
-    def report_progress(data: Dict[str, Any]) -> None:
+    def report_progress(data: dict[str, Any]) -> None:
         if progress_callback:
             progress_callback(data)
 
@@ -82,7 +88,7 @@ async def fetch_messages_incremental(
     log("Estimating total new messages volume across all chats..." if is_en else "Оцінка загального обсягу нових повідомлень по всіх діалогах...")
 
     # Fast pre-scan of total messages in batches of 10 with live feedback
-    dialog_meta: Dict[int, Dict[str, Any]] = {}
+    dialog_meta: dict[int, dict[str, Any]] = {}
     total_expected_all = 0
 
     async def pre_check_dialog(d):
@@ -106,7 +112,7 @@ async def fetch_messages_incremental(
     for i in range(0, total_dialogs, chunk_size):
         chunk = personal_dialogs[i:i + chunk_size]
         results = await asyncio.gather(*[pre_check_dialog(d) for d in chunk])
-        for chat_id, cnt, last_id, db_path, title in results:
+        for chat_id, cnt, last_id, db_path, _title in results:
             dialog_meta[chat_id] = {
                 "expected": cnt,
                 "last_id": last_id,
@@ -201,11 +207,16 @@ async def fetch_messages_incremental(
         chat_label = f"Chat \"{chat_title}\" (~{expected_chat:,} msgs to fetch)..." if is_en else f"Чат «{chat_title}» (~{expected_chat:,} пов. до завантаження)..."
         log(f"[{idx:>3}/{total_dialogs}] {chat_label}")
 
-        chat_messages_batch: List[tuple] = []
+        chat_messages_batch: list[tuple] = []
         chat_count = 0
 
         try:
-            async for msg in client.iter_messages(dialog, from_user="me", min_id=last_msg_id):
+            async for msg in client.iter_messages(
+                dialog,
+                from_user="me",
+                min_id=last_msg_id,
+                wait_time=0.25,
+            ):
                 text = msg.message or msg.text
                 if not text:
                     continue

@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Sleep schedule and circadian rhythm analysis.
 Infers bedtime, wake time, and sleep duration from longest nocturnal messaging gaps.
 """
 
-from typing import List, Dict, Any, Tuple
+from typing import Any
+
 import numpy as np
 
 from src.data.loader import parse_local_dt
@@ -20,7 +20,7 @@ def decimal_hour_to_str(decimal_hour: float) -> str:
     return f"{h:02d}:{m:02d}"
 
 
-def compute_sleep_schedule(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
+def compute_sleep_schedule(chats: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Computes sleep and circadian statistics per year:
       - hour_grid (year x 24 hour heatmap)
@@ -55,7 +55,7 @@ def compute_sleep_schedule(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
     wakes = {y: [] for y in years_set}
     durs = {y: [] for y in years_set}
 
-    for a, b in zip(dts, dts[1:]):
+    for a, b in zip(dts, dts[1:], strict=False):
         gap = (b - a).total_seconds() / 3600
         if not (3 <= gap <= 13):
             continue

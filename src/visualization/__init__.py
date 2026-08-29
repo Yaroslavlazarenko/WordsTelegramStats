@@ -1,58 +1,57 @@
-# -*- coding: utf-8 -*-
 """Visualization package."""
 
-from .theme import (
-    apply_style,
-    create_figure,
-    save_figure,
-    setup_legend,
-    FONT_PATH,
-)
 from .basic import (
-    chart_wordcloud,
     chart_hours,
-    chart_weekdays,
-    chart_top_words,
-    chart_years_evolution,
-    chart_ttr_evolution,
     chart_top_chats,
-    chart_zipf,
+    chart_top_words,
+    chart_ttr_evolution,
+    chart_weekdays,
     chart_word_length,
+    chart_wordcloud,
+    chart_years_evolution,
+    chart_zipf,
     generate_basic_charts,
 )
 from .behavioral import (
-    chart_timeline_monthly,
-    chart_seasonality,
-    chart_night_trend,
     chart_active_days,
-    chart_msg_length_dist,
     chart_message_rhythm,
+    chart_msg_length_dist,
+    chart_night_trend,
+    chart_seasonality,
     chart_sleep_evolution,
+    chart_timeline_monthly,
     generate_behavioral_charts,
 )
 from .linguistic import (
-    chart_profanity_trend,
-    chart_laughter_evolution,
-    chart_questions_exclamations,
-    chart_language_mix,
-    chart_vocab_growth,
-    chart_vocab_timeline,
     chart_core_vocabulary,
-    chart_vocab_validation,
+    chart_informality,
+    chart_language_mix,
+    chart_laughter_evolution,
     chart_ngrams,
     chart_pos_evolution,
-    chart_informality,
+    chart_profanity_trend,
+    chart_questions_exclamations,
+    chart_vocab_growth,
+    chart_vocab_timeline,
+    chart_vocab_validation,
     generate_linguistic_charts,
 )
 from .social import (
     chart_chat_fingerprint,
-    chart_ty_vy,
     chart_mat_per_chat,
-    chart_streamgraph,
-    chart_social_breadth,
     chart_relationships_timeline,
+    chart_social_breadth,
     chart_speech_clustering,
+    chart_streamgraph,
+    chart_ty_vy,
     generate_social_charts,
+)
+from .theme import (
+    FONT_PATH,
+    apply_style,
+    create_figure,
+    save_figure,
+    setup_legend,
 )
 
 __all__ = [

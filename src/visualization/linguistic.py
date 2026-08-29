@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Linguistic style and vocabulary evolution visualization:
   - Profanity trend (profanity_trend.png)
@@ -14,42 +13,39 @@ Linguistic style and vocabulary evolution visualization:
   - Informality & non-dictionary words (informality.png)
 """
 
-from collections import Counter, defaultdict
-from typing import List, Dict, Any
-import math
-import re
+from collections import Counter
+from typing import Any
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 import numpy as np
+from matplotlib.colors import LogNorm
 
+from src.analytics.core_vocab import compute_core_vocabulary
+from src.analytics.style import compute_ngrams
+from src.analytics.vocab_validator import validate_vocabulary
 from src.core.config import (
-    BG_COLOR,
-    FG_COLOR,
-    ACCENT_COLOR,
     ACCENT2_COLOR,
     ACCENT3_COLOR,
+    ACCENT_COLOR,
+    BG_COLOR,
+    FG_COLOR,
     GRID_COLOR,
     PALETTE,
 )
 from src.data.loader import parse_local_dt
+from src.nlp.detectors import (
+    LAUGH_RE,
+    is_mat,
+    laugh_family,
+)
 from src.nlp.lemmatizer import (
-    tokenize,
-    raw_tokenize,
-    word_known,
+    LATIN_RE,
     detect_lang,
     pos_of,
-    LATIN_RE,
+    raw_tokenize,
+    tokenize,
+    word_known,
 )
-from src.nlp.detectors import (
-    is_mat,
-    LAUGH_RE,
-    laugh_family,
-    categorize_vocab_word,
-)
-from src.analytics.core_vocab import compute_core_vocabulary
-from src.analytics.vocab_validator import validate_vocabulary
-from src.analytics.style import compute_ngrams
 from src.visualization.theme import (
     apply_style,
     create_figure,
@@ -64,7 +60,7 @@ def _is_dict_word(w: str) -> bool:
     return word_known(w)
 
 
-def chart_profanity_trend(chats: List[Dict[str, Any]]) -> None:
+def chart_profanity_trend(chats: list[dict[str, Any]]) -> None:
     mat = Counter()
     words = Counter()
     for ch in chats:
@@ -83,7 +79,7 @@ def chart_profanity_trend(chats: List[Dict[str, Any]]) -> None:
     fig = create_figure()
     ax = fig.add_subplot(111)
     bars = ax.bar([str(y) for y in years], rate, color=ACCENT2_COLOR, edgecolor=BG_COLOR)
-    for b, v in zip(bars, rate):
+    for b, v in zip(bars, rate, strict=False):
         ax.text(b.get_x() + b.get_width() / 2, v, f"{v:.1f}", ha="center", va="bottom", color=FG_COLOR, fontsize=9)
     apply_style(ax, "Частота мату за роками")
     ax.set_ylabel("ненормативних слів на 1000 слів")
@@ -91,7 +87,7 @@ def chart_profanity_trend(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "profanity_trend.png")
 
 
-def chart_laughter_evolution(chats: List[Dict[str, Any]]) -> None:
+def chart_laughter_evolution(chats: list[dict[str, Any]]) -> None:
     fams = ["класичний (ха-ха)", "клавіатурний (хпхвх/пхвх)", "хехе / хіхі", "хмх", "інший"]
     data = {f: Counter() for f in fams}
     msgs_year = Counter()
@@ -119,7 +115,7 @@ def chart_laughter_evolution(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "laughter_evolution.png")
 
 
-def chart_questions_exclamations(chats: List[Dict[str, Any]]) -> None:
+def chart_questions_exclamations(chats: list[dict[str, Any]]) -> None:
     q = Counter()
     e = Counter()
     tot = Counter()
@@ -150,10 +146,10 @@ def chart_questions_exclamations(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "questions_exclamations.png")
 
 
-def chart_language_mix(chats: List[Dict[str, Any]]) -> None:
+def chart_language_mix(chats: list[dict[str, Any]]) -> None:
     langs = ["ru", "uk", "en"]
     names = {"ru": "російська", "uk": "українська", "en": "англійська"}
-    data = {l: Counter() for l in langs}
+    data = {lang_code: Counter() for lang_code in langs}
     tot = Counter()
     for ch in chats:
         for d, t in ch["messages"]:
@@ -168,10 +164,10 @@ def chart_language_mix(chats: List[Dict[str, Any]]) -> None:
     if not years:
         return
     ys = [str(y) for y in years]
-    stacks = [[data[l][y] / tot[y] * 100 for y in years] for l in langs]
+    stacks = [[data[lang_code][y] / tot[y] * 100 for y in years] for lang_code in langs]
     fig = create_figure(11, 6)
     ax = fig.add_subplot(111)
-    ax.stackplot(ys, *stacks, labels=[names[l] for l in langs], colors=[ACCENT_COLOR, ACCENT3_COLOR, ACCENT2_COLOR], alpha=0.9)
+    ax.stackplot(ys, *stacks, labels=[names[lang_code] for lang_code in langs], colors=[ACCENT_COLOR, ACCENT3_COLOR, ACCENT2_COLOR], alpha=0.9)
     apply_style(ax, "Мовний мікс за роками (частка слів)")
     ax.set_ylabel("% слів")
     ax.set_ylim(0, 100)
@@ -187,7 +183,7 @@ def chart_language_mix(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "language_mix.png")
 
 
-def chart_vocab_growth(chats: List[Dict[str, Any]]) -> None:
+def chart_vocab_growth(chats: list[dict[str, Any]]) -> None:
     msgs = []
     for ch in chats:
         for d, t in ch["messages"]:
@@ -239,13 +235,13 @@ def chart_vocab_growth(chats: List[Dict[str, Any]]) -> None:
                 transform=ax.transAxes,
                 color=FG_COLOR,
                 fontsize=9,
-                bbox=dict(facecolor=BG_COLOR, edgecolor=GRID_COLOR),
+                bbox={"facecolor": BG_COLOR, "edgecolor": GRID_COLOR},
             )
     setup_legend(ax)
     save_figure(fig, "vocab_growth.png")
 
 
-def chart_vocab_timeline(chats: List[Dict[str, Any]]) -> None:
+def chart_vocab_timeline(chats: list[dict[str, Any]]) -> None:
     msgs = []
     for ch in chats:
         for d, t in ch["messages"]:
@@ -328,12 +324,11 @@ def chart_vocab_timeline(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "vocab_timeline.png")
 
 
-def chart_core_vocabulary(chats: List[Dict[str, Any]]) -> None:
+def chart_core_vocabulary(chats: list[dict[str, Any]]) -> None:
     res = compute_core_vocabulary(chats)
     reliable = res["reliable_years"]
     core = res["core_words"]
     matrix = res["matrix"]
-    total_by_year = res.get("total_by_year", {})
 
     if not core or len(reliable) == 0:
         return
@@ -366,7 +361,7 @@ def chart_core_vocabulary(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "core_vocabulary.png")
 
 
-def chart_vocab_validation(chats: List[Dict[str, Any]]) -> None:
+def chart_vocab_validation(chats: list[dict[str, Any]]) -> None:
     res = validate_vocabulary(chats)
     total_types = res["total_types"]
     total_tokens = res["total_tokens"]
@@ -384,7 +379,7 @@ def chart_vocab_validation(chats: List[Dict[str, Any]]) -> None:
     type_counts = [by_cat_types[c] for c in order]
     wedges1, _, autotexts1 = ax1.pie(
         type_counts, labels=None, autopct="%1.1f%%", colors=colors, startangle=140,
-        pctdistance=0.75, textprops=dict(color=BG_COLOR, fontweight="bold")
+        pctdistance=0.75, textprops={"color": BG_COLOR, "fontweight": "bold"}
     )
     ax1.set_title(f"Склад словника за ТИПАМИ слів\n(всього {total_types:,} унікальних лем)".replace(",", " "), color=FG_COLOR, fontsize=13, fontweight="bold")
 
@@ -393,7 +388,7 @@ def chart_vocab_validation(chats: List[Dict[str, Any]]) -> None:
     token_counts = [by_cat_tokens[c] for c in order]
     wedges2, _, autotexts2 = ax2.pie(
         token_counts, labels=None, autopct="%1.1f%%", colors=colors, startangle=140,
-        pctdistance=0.75, textprops=dict(color=BG_COLOR, fontweight="bold")
+        pctdistance=0.75, textprops={"color": BG_COLOR, "fontweight": "bold"}
     )
     ax2.set_title(f"Склад мовлення за ТОКЕНАМИ (вживаннями)\n(всього {total_tokens:,} слів написав)".replace(",", " "), color=FG_COLOR, fontsize=13, fontweight="bold")
 
@@ -401,7 +396,7 @@ def chart_vocab_validation(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "vocab_validation.png")
 
 
-def chart_ngrams(chats: List[Dict[str, Any]], top: int = 18) -> None:
+def chart_ngrams(chats: list[dict[str, Any]], top: int = 18) -> None:
     bi, tri = compute_ngrams(chats, top)
 
     fig = plt.figure(figsize=(15, 8), facecolor=BG_COLOR)
@@ -428,7 +423,7 @@ def chart_ngrams(chats: List[Dict[str, Any]], top: int = 18) -> None:
     save_figure(fig, "ngrams.png")
 
 
-def chart_pos_evolution(chats: List[Dict[str, Any]]) -> None:
+def chart_pos_evolution(chats: list[dict[str, Any]]) -> None:
     cats = ["дієслова", "іменники", "прикметники", "прислівники", "займенники", "службові/інші"]
     pos_map = {
         "глаголы": "дієслова",
@@ -469,7 +464,7 @@ def chart_pos_evolution(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "pos_evolution.png")
 
 
-def chart_informality(chats: List[Dict[str, Any]]) -> None:
+def chart_informality(chats: list[dict[str, Any]]) -> None:
     unknown = Counter()
     tot = Counter()
     for ch in chats:
@@ -497,7 +492,7 @@ def chart_informality(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "informality.png")
 
 
-def generate_linguistic_charts(chats: List[Dict[str, Any]]) -> None:
+def generate_linguistic_charts(chats: list[dict[str, Any]]) -> None:
     """Generates all linguistic and vocabulary infographics."""
     print("  [•] Генерація лінгвістичної інфографіки...")
     chart_profanity_trend(chats)

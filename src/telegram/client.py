@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 Telegram client singleton manager.
 """
 
-from typing import Optional
 from pathlib import Path
+
 from telethon import TelegramClient
 
-from src.core.config import API_ID, API_HASH, SESSION_NAME
+from src.core.config import API_HASH, API_ID, SESSION_NAME
 
-_client_instance: Optional[TelegramClient] = None
+_client_instance: TelegramClient | None = None
 
 
 def get_telegram_client() -> TelegramClient:
@@ -23,6 +22,7 @@ def get_telegram_client() -> TelegramClient:
             device_model="Desktop UI",
             system_version="Linux",
             app_version="1.0.0",
+            flood_sleep_threshold=120,
         )
     return _client_instance
 

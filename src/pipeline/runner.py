@@ -1,39 +1,36 @@
-# -*- coding: utf-8 -*-
 """
 Pipeline runner and orchestrator.
 Executes the full NLP analytics and infographics generation suite with uniform logging.
 """
 
-import os
-import sys
 import time
 from collections import defaultdict
-from pathlib import Path
-from typing import Callable, Optional, Dict, Any, List
+from collections.abc import Callable
+from typing import Any
 
-from src.core.config import WORDS_LISTS_DIR, REPORT_FILE
-from src.data.loader import load_chats
 from src.analytics.text_stats import (
-    compute_message_stats,
-    top_meaningful,
-    safe_filename,
-    write_frequency_file,
     analyze_vocabulary_shifts,
+    compute_message_stats,
     compute_zipf_comparison,
+    safe_filename,
+    top_meaningful,
+    write_frequency_file,
 )
+from src.core.config import REPORT_FILE, WORDS_LISTS_DIR
+from src.data.loader import load_chats
 from src.visualization.basic import generate_basic_charts
 from src.visualization.behavioral import generate_behavioral_charts
 from src.visualization.linguistic import generate_linguistic_charts
 from src.visualization.social import generate_social_charts
 
 
-def run_text_analysis(log_callback: Optional[Callable[[str], None]] = None, lang: str = "uk") -> Dict[str, Any]:
+def run_text_analysis(log_callback: Callable[[str], None] | None = None, lang: str = "uk") -> dict[str, Any]:
     """
     Runs textual and corpus frequency analysis across chats, years, all-time,
     and generates advanced_report.txt and words_lists/ files.
     """
     is_en = lang == "en"
-    lines: List[str] = []
+    lines: list[str] = []
 
     def log(msg: str = "") -> None:
         lines.append(msg)
@@ -208,7 +205,7 @@ def run_text_analysis(log_callback: Optional[Callable[[str], None]] = None, lang
         for w, lang, c, mz, rz, d in under:
             f.write(f"{w} | {lang} | {c} | {mz:.2f} | {rz:.2f} | {d:+.2f}\n")
         f.write("\n## ОСОБИСТИЙ СЛОВНИК:\n")
-        for w, lang, c, mz in sorted(personal, key=lambda r: r[2], reverse=True):
+        for w, lang, c, _mz in sorted(personal, key=lambda r: r[2], reverse=True):
             f.write(f"{w} | {lang} | {c}\n")
 
     # Збереження advanced_report.txt
@@ -220,7 +217,7 @@ def run_text_analysis(log_callback: Optional[Callable[[str], None]] = None, lang
     return {"status": "ok", "chats_count": len(chats), "clean_messages": filt["clean"]}
 
 
-def run_full_pipeline(log_callback: Optional[Callable[[str], None]] = None, lang: str = "uk") -> None:
+def run_full_pipeline(log_callback: Callable[[str], None] | None = None, lang: str = "uk") -> None:
     """
     Executes the complete end-to-end data analytics and visual rendering pipeline.
     """

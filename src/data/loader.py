@@ -1,119 +1,122 @@
-# -*- coding: utf-8 -*-
-"""
-Data loading and filtering pipeline for Telegram chat databases.
-Filters out forwarded messages, copypastas, links, and noise.
+"""Data loading and filtering pipeline for Telegram chat databases.
+
+Filters out forwarded messages, copypastas, links, and noise to isolate authentic user speech.
 """
 
-import os
 import re
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional, Any
+from typing import Any
 
-from src.core.config import DATA_DIR, TZ_OFFSET_HOURS
+from src.core.config import settings
 from src.data.db import list_chat_db_files
 
-LINK_RE = re.compile(r"https?://\S+|www\.\S+|tg://\S+")
+PATTERN_LINK = re.compile(r"https?://\S+|www\.\S+|tg://\S+")
 
 
-def parse_local_dt(date_str: str, tz_offset: int = TZ_OFFSET_HOURS) -> Optional[datetime]:
-    """
-    Parses an ISO format date string and converts it to local timezone datetime.
+def parse_local_datetime(
+    date_str: str | None,
+    tz_offset_hours: int = settings.tz_offset_hours,
+) -> datetime | None:
+    """Parse an ISO format date string and convert to local timezone datetime.
+
+    :param date_str: ISO formatted timestamp string.
+    :param tz_offset_hours: Timezone offset in hours from UTC.
+    :return: Offset datetime object or None if parsing fails.
     """
     if not date_str:
         return None
     try:
-        dt = datetime.fromisoformat(date_str)
+        dt_parsed = datetime.fromisoformat(date_str)
     except (ValueError, TypeError):
         return None
-    if dt.tzinfo:
-        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-    return dt + timedelta(hours=tz_offset)
+
+    if dt_parsed.tzinfo:
+        dt_parsed = dt_parsed.astimezone(UTC).replace(tzinfo=None)
+    return dt_parsed + timedelta(hours=tz_offset_hours)
 
 
-def is_noise(text: str, max_chars: int = 600, max_words: int = 100) -> bool:
-    """
-    Detects if a message is copypasta, a long quote, or contains links.
-    Used to keep only the user's authentic speech.
+# Backward-compatible alias
+parse_local_dt = parse_local_datetime
+
+
+def is_noise(text: str | None, max_chars: int = 600, max_words: int = 100) -> bool:
+    """Detect if a message is noise, copypasta, link, or forwarded quote.
+
+    :param text: Raw message content.
+    :param max_chars: Maximum acceptable character length.
+    :param max_words: Maximum acceptable word count.
+    :return: True if message should be filtered out, False otherwise.
     """
     if not text:
         return True
-    if len(text) > max_chars:
+    text_stripped = text.strip()
+    if not text_stripped:
         return True
-    if len(text.split()) > max_words:
+    if len(text_stripped) > max_chars:
         return True
-    if LINK_RE.search(text):
+    if len(text_stripped.split()) > max_words:
+        return True
+    if PATTERN_LINK.search(text_stripped):
         return True
     return False
 
 
 def load_chats(
-    data_dir: str | Path = DATA_DIR,
-    tz_offset: int = TZ_OFFSET_HOURS
-) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
+    directory_data: Path | str | None = None,
+    tz_offset_hours: int = settings.tz_offset_hours,
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    """Load all dialogs from SQLite database files and apply authenticity filters.
+
+    :param directory_data: Directory containing chat database files.
+    :param tz_offset_hours: Timezone offset in hours.
+    :return: Tuple of (chats_loaded, stats_filter).
     """
-    Loads all dialogs from SQLite database files.
-    Returns:
-      (chats, filter_stats)
-      chats: list of dicts:
-        {
-          'title': str,
-          'file': str,
-          'messages': list of (date_str, text_str)
-        }
-      filter_stats: {
-          'total': int,
-          'forwarded': int,
-          'noise': int,
-          'clean': int
-      }
-    """
-    data_path = Path(data_dir)
-    if not data_path.is_dir():
-        print(f"[❌] Directory '{data_path}' not found.")
+    path_data = Path(directory_data) if directory_data else settings.dir_data
+    if not path_data.is_dir():
         return [], {"total": 0, "forwarded": 0, "noise": 0, "clean": 0}
 
-    chats = []
-    filt = {"total": 0, "forwarded": 0, "noise": 0, "clean": 0}
+    stats_filter = {"total": 0, "forwarded": 0, "noise": 0, "clean": 0}
+    chats_loaded: list[dict[str, Any]] = []
+    files_db = list_chat_db_files(path_data)
 
-    db_files = sorted(data_path.glob("*.db"))
-
-    for db_file in db_files:
-        conn = sqlite3.connect(db_file)
-        conn.row_factory = sqlite3.Row
+    for file_db in files_db:
         try:
-            rows = conn.execute(
-                "SELECT chat_title, date, text, is_forwarded FROM messages"
-            ).fetchall()
+            with sqlite3.connect(file_db) as connection:
+                connection.row_factory = sqlite3.Row
+                cursor = connection.cursor()
+                rows = cursor.execute(
+                    "SELECT chat_title, date, text, is_forwarded FROM messages"
+                ).fetchall()
         except sqlite3.OperationalError:
-            conn.close()
             continue
-        conn.close()
 
         if not rows:
             continue
 
-        chat_title = rows[0]["chat_title"] or db_file.stem
-        clean_msgs = []
+        title_chat = rows[0]["chat_title"] or file_db.stem
+        messages_clean: list[tuple[str, str]] = []
 
-        for r in rows:
-            filt["total"] += 1
-            if r["is_forwarded"]:
-                filt["forwarded"] += 1
+        for row in rows:
+            stats_filter["total"] += 1
+            if row["is_forwarded"]:
+                stats_filter["forwarded"] += 1
                 continue
-            txt = r["text"] or ""
-            if not txt.strip() or is_noise(txt):
-                filt["noise"] += 1
-                continue
-            filt["clean"] += 1
-            clean_msgs.append((r["date"], txt))
 
-        if clean_msgs:
-            chats.append({
-                "title": chat_title,
-                "file": db_file.name,
-                "messages": clean_msgs
+            text_raw = row["text"] or ""
+            if is_noise(text_raw):
+                stats_filter["noise"] += 1
+                continue
+
+            stats_filter["clean"] += 1
+            messages_clean.append((row["date"], text_raw))
+
+        if messages_clean:
+            chats_loaded.append({
+                "title": title_chat,
+                "file": file_db.name,
+                "messages": messages_clean,
             })
 
-    return chats, filt
+    return chats_loaded, stats_filter

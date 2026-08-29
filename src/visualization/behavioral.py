@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Behavioral and time analytics visualization:
   - Monthly activity timeline (timeline_monthly.png)
@@ -11,24 +10,23 @@ Behavioral and time analytics visualization:
 """
 
 from collections import Counter, defaultdict
-from typing import List, Dict, Any
+from typing import Any
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 import numpy as np
 
+from src.analytics.sleep import compute_sleep_schedule, decimal_hour_to_str
 from src.core.config import (
-    BG_COLOR,
-    FG_COLOR,
-    ACCENT_COLOR,
     ACCENT2_COLOR,
     ACCENT3_COLOR,
+    ACCENT_COLOR,
+    BG_COLOR,
+    FG_COLOR,
     GRID_COLOR,
     MONTHS_UK,
 )
 from src.data.loader import parse_local_dt
 from src.nlp.lemmatizer import tokenize
-from src.analytics.sleep import compute_sleep_schedule, decimal_hour_to_str
 from src.visualization.theme import (
     apply_style,
     create_figure,
@@ -37,7 +35,7 @@ from src.visualization.theme import (
 )
 
 
-def chart_timeline_monthly(chats: List[Dict[str, Any]]) -> None:
+def chart_timeline_monthly(chats: list[dict[str, Any]]) -> None:
     by_month = Counter()
     for ch in chats:
         for d, _ in ch["messages"]:
@@ -63,7 +61,7 @@ def chart_timeline_monthly(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "timeline_monthly.png")
 
 
-def chart_seasonality(chats: List[Dict[str, Any]]) -> None:
+def chart_seasonality(chats: list[dict[str, Any]]) -> None:
     by_m = Counter()
     for ch in chats:
         for d, _ in ch["messages"]:
@@ -75,7 +73,7 @@ def chart_seasonality(chats: List[Dict[str, Any]]) -> None:
     ax = fig.add_subplot(111)
     bars = ax.bar([MONTHS_UK[m] for m in range(1, 13)], vals, color=ACCENT3_COLOR, edgecolor=BG_COLOR)
     mx = max(vals) if vals else 0
-    for b, v in zip(bars, vals):
+    for b, v in zip(bars, vals, strict=False):
         if v == mx:
             b.set_color(ACCENT2_COLOR)
     apply_style(ax, "Сезонність: у які місяці я спілкуюся більше")
@@ -84,7 +82,7 @@ def chart_seasonality(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "seasonality.png")
 
 
-def chart_night_trend(chats: List[Dict[str, Any]]) -> None:
+def chart_night_trend(chats: list[dict[str, Any]]) -> None:
     total = Counter()
     night = Counter()
     for ch in chats:
@@ -109,7 +107,7 @@ def chart_night_trend(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "night_trend.png")
 
 
-def chart_active_days(chats: List[Dict[str, Any]]) -> None:
+def chart_active_days(chats: list[dict[str, Any]]) -> None:
     days_by_year = defaultdict(set)
     all_days = set()
     for ch in chats:
@@ -136,7 +134,7 @@ def chart_active_days(chats: List[Dict[str, Any]]) -> None:
     fig = create_figure()
     ax = fig.add_subplot(111)
     bars = ax.bar([str(y) for y in years], counts, color=ACCENT_COLOR, edgecolor=BG_COLOR)
-    for b, v in zip(bars, counts):
+    for b, v in zip(bars, counts, strict=False):
         ax.text(b.get_x() + b.get_width() / 2, v, str(v), ha="center", va="bottom", color=FG_COLOR, fontsize=9)
     apply_style(ax, f"Активних днів у році  (всього: {len(all_days)} дн., макс. серія: {best} дн.)")
     ax.set_ylabel("днів із повідомленнями")
@@ -145,7 +143,7 @@ def chart_active_days(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "active_days.png")
 
 
-def chart_msg_length_dist(chats: List[Dict[str, Any]]) -> None:
+def chart_msg_length_dist(chats: list[dict[str, Any]]) -> None:
     lengths = []
     for ch in chats:
         for _, t in ch["messages"]:
@@ -167,13 +165,13 @@ def chart_msg_length_dist(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "msg_length_dist.png")
 
 
-def chart_message_rhythm(chats: List[Dict[str, Any]]) -> None:
+def chart_message_rhythm(chats: list[dict[str, Any]]) -> None:
     gaps = []
     rapid_by_year = Counter()
     pairs_by_year = Counter()
     for ch in chats:
         dts = sorted(parse_local_dt(d) for d, _ in ch["messages"] if parse_local_dt(d))
-        for a, b in zip(dts, dts[1:]):
+        for a, b in zip(dts, dts[1:], strict=False):
             sec = (b - a).total_seconds()
             if sec < 0:
                 continue
@@ -205,7 +203,7 @@ def chart_message_rhythm(chats: List[Dict[str, Any]]) -> None:
         transform=ax1.transAxes,
         color=FG_COLOR,
         fontsize=10,
-        bbox=dict(facecolor=BG_COLOR, edgecolor=GRID_COLOR),
+        bbox={"facecolor": BG_COLOR, "edgecolor": GRID_COLOR},
     )
     setup_legend(ax1)
 
@@ -219,7 +217,7 @@ def chart_message_rhythm(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "message_rhythm.png")
 
 
-def chart_sleep_evolution(chats: List[Dict[str, Any]]) -> None:
+def chart_sleep_evolution(chats: list[dict[str, Any]]) -> None:
     res = compute_sleep_schedule(chats)
     years = res["years"]
     norm = res["normalized_grid"]
@@ -252,7 +250,7 @@ def chart_sleep_evolution(chats: List[Dict[str, Any]]) -> None:
     ax2 = fig.add_subplot(gs[1])
     ax2.plot(ys, bed_med, "o-", color=ACCENT2_COLOR, lw=2.5, label="Відбій (медіана)")
     ax2.plot(ys, wake_med, "s-", color=ACCENT_COLOR, lw=2.5, label="Підйом (медіана)")
-    for i, y in enumerate(valid_years):
+    for i, _y in enumerate(valid_years):
         ax2.text(i, bed_med[i] + 0.35, decimal_hour_to_str(bed_med[i]), color=ACCENT2_COLOR, ha="center", fontsize=9)
         ax2.text(i, wake_med[i] - 0.55, decimal_hour_to_str(wake_med[i]), color=ACCENT_COLOR, ha="center", fontsize=9)
     apply_style(ax2, "Оцінка часу засинання та пробудження (найдовша нічна пауза)")
@@ -262,7 +260,7 @@ def chart_sleep_evolution(chats: List[Dict[str, Any]]) -> None:
 
     ax3 = fig.add_subplot(gs[2])
     bars = ax3.bar(ys, dur_med, color=ACCENT3_COLOR, edgecolor=BG_COLOR, width=0.55)
-    for b, v in zip(bars, dur_med):
+    for b, v in zip(bars, dur_med, strict=False):
         ax3.text(b.get_x() + b.get_width() / 2, v + 0.1, f"{v:.1f} год", ha="center", color=FG_COLOR, fontsize=9)
     apply_style(ax3, "Медіанна тривалість нічної паузи (оцінка сну)")
     ax3.set_ylabel("годин")
@@ -272,7 +270,7 @@ def chart_sleep_evolution(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "sleep_evolution.png")
 
 
-def generate_behavioral_charts(chats: List[Dict[str, Any]]) -> None:
+def generate_behavioral_charts(chats: list[dict[str, Any]]) -> None:
     """Generates all behavioral and temporal infographics."""
     print("  [•] Генерація інфографіки поведінки та часу...")
     chart_timeline_monthly(chats)

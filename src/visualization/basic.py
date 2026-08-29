@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Basic infographics suite:
   1. Wordcloud
@@ -12,32 +11,29 @@ Basic infographics suite:
   9. Word length distribution
 """
 
-import math
 from collections import Counter, defaultdict
-from typing import List, Dict, Any
+from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 from wordcloud import WordCloud
 
+from src.analytics.text_stats import compute_message_stats, top_meaningful
 from src.core.config import (
-    BG_COLOR,
-    FG_COLOR,
-    ACCENT_COLOR,
     ACCENT2_COLOR,
     ACCENT3_COLOR,
-    GRID_COLOR,
-    PALETTE,
+    ACCENT_COLOR,
+    BG_COLOR,
     DAYS_UK,
+    FG_COLOR,
+    GRID_COLOR,
 )
 from src.data.loader import parse_local_dt
-from src.nlp.lemmatizer import tokenize, is_stop_word
-from src.analytics.text_stats import compute_message_stats, top_meaningful
+from src.nlp.lemmatizer import is_stop_word, tokenize
 from src.visualization.theme import (
+    FONT_PATH,
     apply_style,
     create_figure,
     save_figure,
-    FONT_PATH,
 )
 
 
@@ -69,7 +65,7 @@ def chart_wordcloud(all_counter: Counter) -> None:
     save_figure(fig, "wordcloud.png")
 
 
-def chart_hours(chats: List[Dict[str, Any]]) -> None:
+def chart_hours(chats: list[dict[str, Any]]) -> None:
     hours = Counter()
     for ch in chats:
         for d, _ in ch["messages"]:
@@ -95,7 +91,7 @@ def chart_hours(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "activity_by_hour.png")
 
 
-def chart_weekdays(chats: List[Dict[str, Any]]) -> None:
+def chart_weekdays(chats: list[dict[str, Any]]) -> None:
     days = Counter()
     for ch in chats:
         for d, _ in ch["messages"]:
@@ -133,7 +129,7 @@ def chart_top_words(all_counter: Counter) -> None:
     save_figure(fig, "top_words.png")
 
 
-def chart_years_evolution(chats: List[Dict[str, Any]]) -> None:
+def chart_years_evolution(chats: list[dict[str, Any]]) -> None:
     by_year_msgs = Counter()
     by_year_words = Counter()
     for ch in chats:
@@ -163,7 +159,7 @@ def chart_years_evolution(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "years_volume.png")
 
 
-def chart_ttr_evolution(chats: List[Dict[str, Any]]) -> None:
+def chart_ttr_evolution(chats: list[dict[str, Any]]) -> None:
     by_year = defaultdict(list)
     for ch in chats:
         for d, t in ch["messages"]:
@@ -202,7 +198,7 @@ def chart_ttr_evolution(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "ttr_evolution.png")
 
 
-def chart_top_chats(chats: List[Dict[str, Any]], top_n: int = 12) -> None:
+def chart_top_chats(chats: list[dict[str, Any]], top_n: int = 12) -> None:
     active = sorted(chats, key=lambda c: len(c["messages"]), reverse=True)[:top_n]
     titles = [c["title"][:22] for c in reversed(active)]
     counts = [len(c["messages"]) for c in reversed(active)]
@@ -260,7 +256,7 @@ def chart_word_length(all_counter: Counter) -> None:
     save_figure(fig, "word_length_distribution.png")
 
 
-def generate_basic_charts(chats: List[Dict[str, Any]]) -> None:
+def generate_basic_charts(chats: list[dict[str, Any]]) -> None:
     """Generates all 9 basic infographics charts."""
     print("  [•] Генерація базової інфографіки (9 графіків)...")
     all_counter = Counter()

@@ -1,135 +1,178 @@
-# -*- coding: utf-8 -*-
-"""
-Morphological analysis and lemmatization module using pymorphy3.
+"""Morphological analysis and lemmatization module using pymorphy3.
+
 Provides automated POS tagging, stop word detection, and dictionary validation
 without requiring hardcoded word lists.
 """
 
 import re
 from functools import lru_cache
-from typing import List, Optional
 
 import pymorphy3
 
-WORD_RE = re.compile(r"[a-zA-Zа-яА-ЯёЁіїєґІЇЄҐ]+")
-LATIN_RE = re.compile(r"[a-z]")
-UK_LETTERS_RE = re.compile(r"[іїєґ]")
+PATTERN_WORD = re.compile(r"[a-zA-Zа-яА-ЯёЁіїєґІЇЄҐ]+")
+PATTERN_LATIN = re.compile(r"[a-z]")
+PATTERN_UK_LETTERS = re.compile(r"[іїєґ]")
 
-_ru = None
-_uk = None
+# Backward-compatible aliases
+WORD_RE = PATTERN_WORD
+LATIN_RE = PATTERN_LATIN
+UK_LETTERS_RE = PATTERN_UK_LETTERS
 
-
-def _ru_morph():
-    global _ru
-    if _ru is None:
-        _ru = pymorphy3.MorphAnalyzer(lang="ru")
-    return _ru
+_morph_analyzer_ru: pymorphy3.MorphAnalyzer | None = None
+_morph_analyzer_uk: pymorphy3.MorphAnalyzer | bool | None = None
 
 
-def _uk_morph():
-    global _uk
-    if _uk is None:
+def get_morph_analyzer_ru() -> pymorphy3.MorphAnalyzer:
+    """Return singleton MorphAnalyzer instance for Russian language."""
+    global _morph_analyzer_ru
+    if _morph_analyzer_ru is None:
+        _morph_analyzer_ru = pymorphy3.MorphAnalyzer(lang="ru")
+    return _morph_analyzer_ru
+
+
+def get_morph_analyzer_uk() -> pymorphy3.MorphAnalyzer | None:
+    """Return singleton MorphAnalyzer instance for Ukrainian language."""
+    global _morph_analyzer_uk
+    if _morph_analyzer_uk is None:
         try:
-            _uk = pymorphy3.MorphAnalyzer(lang="uk")
+            _morph_analyzer_uk = pymorphy3.MorphAnalyzer(lang="uk")
         except Exception:
-            _uk = False
-    return _uk
+            _morph_analyzer_uk = False
+    return _morph_analyzer_uk if isinstance(_morph_analyzer_uk, pymorphy3.MorphAnalyzer) else None
 
 
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=65536)
 def lemmatize_word(word: str) -> str:
-    """Returns normalized lemma; unrecognized words/slang are preserved as is."""
-    if LATIN_RE.search(word):
+    """Normalize input word into standard dictionary lemma form.
+
+    :param word: Single token string.
+    :return: Normalized lemma or original string if unrecognized.
+    """
+    if PATTERN_LATIN.search(word):
         return word
-    if UK_LETTERS_RE.search(word):
-        uk = _uk_morph()
-        if uk and uk.word_is_known(word):
-            return uk.parse(word)[0].normal_form
-    ru = _ru_morph()
-    if ru.word_is_known(word):
-        return ru.parse(word)[0].normal_form
+
+    if PATTERN_UK_LETTERS.search(word):
+        morph_uk = get_morph_analyzer_uk()
+        if morph_uk and morph_uk.word_is_known(word):
+            return morph_uk.parse(word)[0].normal_form
+
+    morph_ru = get_morph_analyzer_ru()
+    if morph_ru.word_is_known(word):
+        return morph_ru.parse(word)[0].normal_form
+
+    # Fallback to Ukrainian analyzer if unknown in Russian
+    morph_uk = get_morph_analyzer_uk()
+    if morph_uk and morph_uk.word_is_known(word):
+        return morph_uk.parse(word)[0].normal_form
+
     return word
 
 
-def tokenize(text: str) -> List[str]:
-    """Converts raw text into a list of normalized lemmas."""
-    return [lemmatize_word(w) for w in WORD_RE.findall(text.lower())]
+def tokenize(text: str) -> list[str]:
+    """Convert raw text string into a list of normalized lemmas.
 
-
-def raw_tokenize(text: str) -> List[str]:
-    """Converts raw text into a list of lowercase tokens without lemmatization."""
-    return WORD_RE.findall(text.lower())
-
-
-@lru_cache(maxsize=None)
-def word_known(word: str) -> bool:
-    """Checks if a word exists in morphological dictionaries (ru/uk) or is latin."""
-    if LATIN_RE.search(word):
-        return True
-    if UK_LETTERS_RE.search(word):
-        uk = _uk_morph()
-        if uk and uk.word_is_known(word):
-            return True
-    return _ru_morph().word_is_known(word)
-
-
-@lru_cache(maxsize=None)
-def is_stop_word(word: str) -> bool:
+    :param text: Input text document.
+    :return: List of lemmatized lowercase tokens.
     """
-    Dynamically identifies functional and grammatical service words (prepositions,
-    conjunctions, pronouns, particles, pronominal adjectives) purely via morphological POS tags.
+    return [lemmatize_word(token) for token in PATTERN_WORD.findall(text.lower())]
+
+
+def raw_tokenize(text: str) -> list[str]:
+    """Extract lowercase tokens from text without applying lemmatization.
+
+    :param text: Input text document.
+    :return: List of raw lowercase tokens.
+    """
+    return PATTERN_WORD.findall(text.lower())
+
+
+@lru_cache(maxsize=65536)
+def word_known(word: str) -> bool:
+    """Check if word exists in morphological dictionaries (Russian/Ukrainian) or Latin.
+
+    :param word: Single token string.
+    :return: True if known, False otherwise.
+    """
+    if PATTERN_LATIN.search(word):
+        return True
+
+    if PATTERN_UK_LETTERS.search(word):
+        morph_uk = get_morph_analyzer_uk()
+        if morph_uk and morph_uk.word_is_known(word):
+            return True
+
+    return get_morph_analyzer_ru().word_is_known(word)
+
+
+@lru_cache(maxsize=65536)
+def is_stop_word(word: str) -> bool:
+    """Identify functional and grammatical service words using POS tags.
+
+    :param word: Single token string.
+    :return: True if stop word, False otherwise.
     """
     if len(word) <= 1:
         return True
-    if LATIN_RE.search(word):
+    if PATTERN_LATIN.search(word):
         return len(word) <= 2
 
-    # Check grammatical POS tag & grammemes via pymorphy3
-    SERVICE_POS = {"PREP", "CONJ", "PRCL", "NPRO"}
-    ru = _ru_morph()
-    if ru.word_is_known(word):
-        p = ru.parse(word)[0]
-        if p.tag.POS in SERVICE_POS or "Apro" in p.tag.grammemes:
+    service_pos_tags = {"PREP", "CONJ", "PRCL", "NPRO"}
+
+    morph_ru = get_morph_analyzer_ru()
+    if morph_ru.word_is_known(word):
+        parse_result = morph_ru.parse(word)[0]
+        if parse_result.tag.POS in service_pos_tags or "Apro" in parse_result.tag.grammemes:
             return True
 
-    uk = _uk_morph()
-    if uk and uk.word_is_known(word):
-        p = uk.parse(word)[0]
-        if p.tag.POS in SERVICE_POS or "Apro" in p.tag.grammemes:
+    morph_uk = get_morph_analyzer_uk()
+    if morph_uk and morph_uk.word_is_known(word):
+        parse_result = morph_uk.parse(word)[0]
+        if parse_result.tag.POS in service_pos_tags or "Apro" in parse_result.tag.grammemes:
             return True
 
     return False
 
 
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=65536)
 def detect_lang(word: str) -> str:
-    """Detects word language dynamically using alphabet and dictionary lookup."""
-    if LATIN_RE.search(word):
+    """Detect language of a word using alphabet heuristics and dictionary lookup.
+
+    :param word: Single token string.
+    :return: ISO language code ('en', 'uk', 'ru').
+    """
+    if PATTERN_LATIN.search(word):
         return "en"
-    if UK_LETTERS_RE.search(word):
+    if PATTERN_UK_LETTERS.search(word):
         return "uk"
-    uk = _uk_morph()
-    if uk and uk.word_is_known(word) and not _ru_morph().word_is_known(word):
+
+    morph_uk = get_morph_analyzer_uk()
+    if morph_uk and morph_uk.word_is_known(word) and not get_morph_analyzer_ru().word_is_known(word):
         return "uk"
+
     return "ru"
 
 
-@lru_cache(maxsize=None)
-def pos_of(word: str) -> Optional[str]:
-    """Returns generalized part of speech for dictionary words."""
-    if LATIN_RE.search(word) or not _ru_morph().word_is_known(word):
+@lru_cache(maxsize=65536)
+def pos_of(word: str) -> str | None:
+    """Return generalized Russian part of speech classification for dictionary words.
+
+    :param word: Single token string.
+    :return: Friendly category name or None.
+    """
+    if PATTERN_LATIN.search(word) or not get_morph_analyzer_ru().word_is_known(word):
         return None
-    tag = _ru_morph().parse(word)[0].tag.POS
-    if tag in ("VERB", "INFN", "GRND", "PRTF", "PRTS"):
+
+    tag_pos = get_morph_analyzer_ru().parse(word)[0].tag.POS
+    if tag_pos in ("VERB", "INFN", "GRND", "PRTF", "PRTS"):
         return "глаголы"
-    if tag == "NOUN":
+    if tag_pos == "NOUN":
         return "существительные"
-    if tag in ("ADJF", "ADJS", "COMP"):
+    if tag_pos in ("ADJF", "ADJS", "COMP"):
         return "прилагательные"
-    if tag == "ADVB":
+    if tag_pos == "ADVB":
         return "наречия"
-    if tag == "NPRO":
+    if tag_pos == "NPRO":
         return "местоимения"
-    if tag is None:
+    if tag_pos is None:
         return None
     return "служебные/прочие"

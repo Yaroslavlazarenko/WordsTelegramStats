@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Linguistic pattern detectors: profanity, laughter styles, address forms (ty/vy), and vocabulary categories.
 """
 
 import re
-from src.nlp.lemmatizer import word_known, LATIN_RE
+
+from src.nlp.lemmatizer import LATIN_RE, word_known
 
 # Profanity roots (Russian / Ukrainian)
 MAT_ROOTS = (

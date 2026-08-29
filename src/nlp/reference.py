@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Builds and caches lemma-level frequency distribution from wordfreq.
 Used to calculate Zipf deviations, distinctive words, and vocabulary gaps.
@@ -7,13 +6,12 @@ Used to calculate Zipf deviations, distinctive words, and vocabulary gaps.
 import math
 import pickle
 from collections import defaultdict
-from typing import Dict
 
-from src.core.config import REF_RU_PATH, CACHE_DIR
+from src.core.config import CACHE_DIR, REF_RU_PATH
 from src.nlp.lemmatizer import lemmatize_word
 
 
-def build_ru_lemma_reference(verbose: bool = True) -> Dict[str, float]:
+def build_ru_lemma_reference(verbose: bool = True) -> dict[str, float]:
     """
     Builds and caches lemma-level frequency distribution from wordfreq for Russian.
     Returns a dict {lemma: zipf_score}.

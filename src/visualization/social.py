@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Social, interpersonal, and dialog dynamics visualization:
   - Chat linguistic fingerprints TF-IDF (chat_fingerprint.png)
@@ -12,26 +11,25 @@ Social, interpersonal, and dialog dynamics visualization:
 
 import math
 from collections import Counter, defaultdict
-from typing import List, Dict, Any
+from typing import Any
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 import numpy as np
-from scipy.cluster.hierarchy import linkage, dendrogram
+from matplotlib.colors import LogNorm
+from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.spatial.distance import squareform
 
 from src.core.config import (
+    ACCENT2_COLOR,
+    ACCENT_COLOR,
     BG_COLOR,
     FG_COLOR,
-    ACCENT_COLOR,
-    ACCENT2_COLOR,
-    ACCENT3_COLOR,
     GRID_COLOR,
     PALETTE,
 )
 from src.data.loader import parse_local_dt
-from src.nlp.lemmatizer import tokenize, is_stop_word
-from src.nlp.detectors import is_ty, is_vy, is_mat, LAUGH_RE
+from src.nlp.detectors import LAUGH_RE, is_mat, is_ty, is_vy
+from src.nlp.lemmatizer import is_stop_word, tokenize
 from src.nlp.reference import build_ru_lemma_reference
 from src.visualization.theme import (
     apply_style,
@@ -41,7 +39,7 @@ from src.visualization.theme import (
 )
 
 
-def _chat_counters(chats: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _chat_counters(chats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ru_ref = build_ru_lemma_reference()
     out = []
     for ch in chats:
@@ -59,7 +57,7 @@ def _chat_counters(chats: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return out
 
 
-def chart_chat_fingerprint(chats: List[Dict[str, Any]], top_chats: int = 9, per: int = 7) -> None:
+def chart_chat_fingerprint(chats: list[dict[str, Any]], top_chats: int = 9, per: int = 7) -> None:
     cc = _chat_counters(chats)
     df = Counter()
     for d in cc:
@@ -104,7 +102,7 @@ def chart_chat_fingerprint(chats: List[Dict[str, Any]], top_chats: int = 9, per:
     save_figure(fig, "chat_fingerprint.png")
 
 
-def chart_ty_vy(chats: List[Dict[str, Any]], top_chats: int = 15) -> None:
+def chart_ty_vy(chats: list[dict[str, Any]], top_chats: int = 15) -> None:
     rows = []
     for ch in sorted(chats, key=lambda c: len(c["messages"]), reverse=True)[:top_chats]:
         ty = vy = 0
@@ -133,7 +131,7 @@ def chart_ty_vy(chats: List[Dict[str, Any]], top_chats: int = 15) -> None:
     save_figure(fig, "ty_vy.png")
 
 
-def chart_mat_per_chat(chats: List[Dict[str, Any]], top_chats: int = 15) -> None:
+def chart_mat_per_chat(chats: list[dict[str, Any]], top_chats: int = 15) -> None:
     rows = []
     for ch in sorted(chats, key=lambda c: len(c["messages"]), reverse=True)[:top_chats]:
         mat = tot = 0
@@ -156,7 +154,7 @@ def chart_mat_per_chat(chats: List[Dict[str, Any]], top_chats: int = 15) -> None
     save_figure(fig, "mat_per_chat.png")
 
 
-def chart_streamgraph(chats: List[Dict[str, Any]], top_chats: int = 8) -> None:
+def chart_streamgraph(chats: list[dict[str, Any]], top_chats: int = 8) -> None:
     top = sorted(chats, key=lambda c: len(c["messages"]), reverse=True)[:top_chats]
     if not top:
         return
@@ -188,7 +186,7 @@ def chart_streamgraph(chats: List[Dict[str, Any]], top_chats: int = 8) -> None:
     save_figure(fig, "streamgraph_chats.png")
 
 
-def chart_social_breadth(chats: List[Dict[str, Any]]) -> None:
+def chart_social_breadth(chats: list[dict[str, Any]]) -> None:
     by_month = defaultdict(set)
     year_chat = defaultdict(Counter)
     for ch in chats:
@@ -232,7 +230,7 @@ def chart_social_breadth(chats: List[Dict[str, Any]]) -> None:
     save_figure(fig, "social_breadth.png")
 
 
-def chart_relationships_timeline(chats: List[Dict[str, Any]], top_n: int = 25) -> None:
+def chart_relationships_timeline(chats: list[dict[str, Any]], top_n: int = 25) -> None:
     top = sorted(chats, key=lambda c: len(c["messages"]), reverse=True)[:top_n]
     allm = []
     for ch in top:
@@ -290,7 +288,7 @@ def chart_relationships_timeline(chats: List[Dict[str, Any]], top_n: int = 25) -
     save_figure(fig, "relationships_timeline.png")
 
 
-def chart_speech_clustering(chats: List[Dict[str, Any]], top_n: int = 20) -> None:
+def chart_speech_clustering(chats: list[dict[str, Any]], top_n: int = 20) -> None:
     top = sorted(chats, key=lambda c: len(c["messages"]), reverse=True)[:top_n]
     if len(top) < 3:
         return
@@ -365,7 +363,7 @@ def chart_speech_clustering(chats: List[Dict[str, Any]], top_n: int = 20) -> Non
     save_figure(fig, "speech_clustering.png")
 
 
-def generate_social_charts(chats: List[Dict[str, Any]]) -> None:
+def generate_social_charts(chats: list[dict[str, Any]]) -> None:
     """Generates all interpersonal and dialog dynamics infographics."""
     print("  [•] Генерація інфографіки стосунків та діалогів...")
     chart_chat_fingerprint(chats)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Core text statistics engine.
 Computes token frequencies, TTR (type-token ratio), chat rankings, yearly trends,
@@ -6,20 +5,18 @@ Zipf distribution slopes, and language reference comparisons.
 """
 
 import math
-import os
 import re
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import List, Dict, Any, Tuple, Optional
+from typing import Any
 
 from wordfreq import zipf_frequency
 
-from src.core.config import WORDS_LISTS_DIR, REPORT_FILE
-from src.nlp.lemmatizer import tokenize, is_stop_word, detect_lang, WORD_RE
+from src.nlp.lemmatizer import WORD_RE, detect_lang, is_stop_word, tokenize
 from src.nlp.reference import build_ru_lemma_reference
 
 
-def compute_message_stats(messages: List[Tuple[str, str]]) -> Dict[str, Any]:
+def compute_message_stats(messages: list[tuple[str, str]]) -> dict[str, Any]:
     """
     Computes linguistic metrics for a list of (date_str, text_str) tuples.
     """
@@ -51,7 +48,7 @@ def compute_message_stats(messages: List[Tuple[str, str]]) -> Dict[str, Any]:
     }
 
 
-def top_meaningful(counter: Counter, n: int = 15) -> List[Tuple[str, int]]:
+def top_meaningful(counter: Counter, n: int = 15) -> list[tuple[str, int]]:
     """Returns top N meaningful words (excluding stop words and short particles)."""
     return [
         (w, c)
@@ -80,9 +77,9 @@ def write_frequency_file(file_path: str | Path, title: str, counter: Counter) ->
 
 
 def analyze_vocabulary_shifts(
-    year_stats: Dict[str, Dict[str, Any]],
-    years: List[str]
-) -> Tuple[List[Tuple[str, float, float, float]], List[Tuple[str, float, float, float]]]:
+    year_stats: dict[str, dict[str, Any]],
+    years: list[str]
+) -> tuple[list[tuple[str, float, float, float]], list[tuple[str, float, float, float]]]:
     """
     Identifies words rising in popularity and fading out between earliest and latest years.
     Returns: (rose, fell) where each item is (word, freq_first_ppm, freq_last_ppm, delta_ppm)
@@ -118,7 +115,7 @@ def analyze_vocabulary_shifts(
 def compute_zipf_comparison(
     counter: Counter,
     min_count: int = 25
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Compares user frequencies against standard language corpus (wordfreq).
     """
@@ -165,7 +162,7 @@ def compute_zipf_comparison(
         ys = [math.log10(c) for _, c in items]
         n = len(xs)
         mx, my = sum(xs) / n, sum(ys) / n
-        num = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
+        num = sum((x - mx) * (y - my) for x, y in zip(xs, ys, strict=False))
         den = sum((x - mx) ** 2 for x in xs)
         slope = num / den if den else 0.0
 

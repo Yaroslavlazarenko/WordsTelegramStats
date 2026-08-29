@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Validation and quality audit of vocabulary.
 Distinguishes genuine dictionary words from typos, chat laughter, and slang,
@@ -6,13 +5,13 @@ and computes hapax legomena distributions.
 """
 
 from collections import Counter
-from typing import List, Dict, Any
+from typing import Any
 
-from src.nlp.lemmatizer import tokenize
 from src.nlp.detectors import categorize_vocab_word
+from src.nlp.lemmatizer import tokenize
 
 
-def validate_vocabulary(chats: List[Dict[str, Any]]) -> Dict[str, Any]:
+def validate_vocabulary(chats: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Analyzes vocabulary authenticity across all chats.
     Returns:
